@@ -23,6 +23,7 @@ import { AuctionCard } from '@/components/marketplace/AuctionCard';
 import { CategoryGrid } from '@/components/marketplace/CategoryGrid';
 import { CountdownTimer } from '@/components/marketplace/CountdownTimer';
 import { MarketplaceNavbar } from '@/components/marketplace/MarketplaceNavbar';
+import { SiteFooter } from '@/components/marketplace/SiteFooter';
 import { UnifiedSearchBar } from '@/components/marketplace/UnifiedSearchBar';
 import { ShinyButton } from '@/components/ui/shiny-button';
 import {
@@ -808,38 +809,7 @@ export function PublicMarketplaceHome({
       </main>
 
       {/* 8. FOOTER */}
-      <footer className="border-t border-white/10 bg-[#07080b]">
-        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-4 py-10 text-xs text-white/55 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/snipe-shield-logo.webp"
-              alt="Snipe Shield"
-              width={24}
-              height={24}
-              className="h-6 w-6 rounded-md object-contain opacity-85"
-            />
-            <span className="font-medium italic text-white/90">Snipe Shield</span>
-            <span className="text-white/30">&bull;</span>
-            <span>Real-Time Protected Auctions</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-5">
-            <Link href="/search" className="transition hover:text-white">
-              Browse Auctions
-            </Link>
-            <Link href={sellHref} className="transition hover:text-white">
-              Sell an Item
-            </Link>
-            <Link href="/login" className="transition hover:text-white">
-              Sign In
-            </Link>
-            <Link href="/signup" className="transition hover:text-white">
-              Create Account
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter sellHref={sellHref} />
     </div>
   );
 }

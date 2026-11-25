@@ -245,9 +245,9 @@ export function BidderHomeView({
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {savedEndingSoonCount > 0 ? (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/20 bg-white/[0.05] px-5 py-3 text-xs text-white/80">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300/30 bg-amber-950/30 px-5 py-3 text-xs text-amber-100">
             <span className="flex items-center gap-2 font-medium">
-              <Bell className="h-4 w-4 text-white/80" />
+              <Bell className="h-4 w-4 text-amber-300" />
               {savedEndingSoonCount} item{savedEndingSoonCount === 1 ? '' : 's'} on your Saved
               Watchlist ending within 2 hours!
             </span>
@@ -267,7 +267,7 @@ export function BidderHomeView({
               className="space-y-6"
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1.5 text-[11px] font-medium tracking-wide text-white/85">
-                <ShieldCheck className="h-3.5 w-3.5 text-white/85" aria-hidden="true" />
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
                 <span>SHIELDLOCK &amp; FAIRCLOSE ANTI-SNIPING</span>
               </div>
 
@@ -363,8 +363,8 @@ export function BidderHomeView({
                       )}
 
                       <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-950/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-200 backdrop-blur-md">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                           Featured Live Lot
                         </span>
                         <span className="rounded-full border border-white/15 bg-black/75 px-2.5 py-1 text-[10px] font-medium text-white/85 backdrop-blur-md">
@@ -458,7 +458,7 @@ export function BidderHomeView({
                                   <span className="font-semibold tabular-nums text-white/90">
                                     {formatINR(item.current_price)}
                                   </span>
-                                  <span className="text-white/85">
+                                  <span className="text-emerald-300">
                                     {item.bid_count ?? 0} bids
                                   </span>
                                 </div>
@@ -483,7 +483,7 @@ export function BidderHomeView({
             <section id="live-auctions" aria-labelledby="bidder-ending-heading" className="space-y-5">
               <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-300">
                     <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>Live &amp; Ending Soon</span>
                   </div>
@@ -677,7 +677,7 @@ export function BidderHomeView({
           {/* 6. HOW IT WORKS */}
           <section id="how-it-works" className="space-y-6">
             <div className="border-b border-white/10 pb-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/85">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">
                 The SnipeShield Standard
               </p>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">
@@ -720,7 +720,6 @@ export function BidderHomeView({
               </div>
             </div>
           </section>
-
         </div>
       </main>
 

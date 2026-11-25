@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  BarChart3,
   Bell,
   Bookmark,
   Bot,
@@ -283,6 +284,21 @@ export function MarketplaceNavbar({ user }: MarketplaceNavbarProps) {
               <span className="hidden lg:inline">Orders</span>
             </Link>
 
+            <Link
+              href="/analytics"
+              prefetch
+              aria-label="Analytics"
+              aria-current={pathname === '/analytics' ? 'page' : undefined}
+              className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
+                pathname === '/analytics'
+                  ? 'border-white/30 bg-white/12 text-white'
+                  : 'border-white/10 bg-white/[0.02] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
+              }`}
+            >
+              <BarChart3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="hidden xl:inline">Analytics</span>
+            </Link>
+
             {isSeller ? (
               <Link
                 href="/seller/create-listing"
@@ -495,6 +511,16 @@ export function MarketplaceNavbar({ user }: MarketplaceNavbarProps) {
               }`}
             >
               <Package className="h-4 w-4" /> Orders
+            </Link>
+            <Link
+              href="/analytics"
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-medium ${
+                pathname === '/analytics'
+                  ? 'border-white/30 bg-white/10 text-white'
+                  : 'border-white/10 bg-white/[0.02] text-white/75'
+              }`}
+            >
+              <BarChart3 className="h-4 w-4" /> Analytics
             </Link>
             {isSeller ? (
               <Link

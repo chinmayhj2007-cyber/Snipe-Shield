@@ -15,6 +15,7 @@ const PROTECTED_PREFIXES = [
   '/notifications',
   '/compare',
   '/sellers',
+  '/analytics',
 ];
 const AUTH_ROUTES = ['/login', '/signup'];
 

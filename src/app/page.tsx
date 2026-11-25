@@ -1,22 +1,16 @@
-import { redirect } from 'next/navigation';
-import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { PublicMarketplaceHome } from '@/components/marketplace/PublicMarketplaceHome';
+import { fetchPublicMarketplaceHomeData } from '@/lib/marketplace/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const supabase = await getSupabaseServerClient();
+  const { user, auctions, savedIds } = await fetchPublicMarketplaceHomeData();
 
-  if (!supabase) {
-    redirect('/login');
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect('/dashboard');
-  }
-
-  redirect('/login');
+  return (
+    <PublicMarketplaceHome
+      user={user}
+      initialAuctions={auctions}
+      initialSavedIds={savedIds}
+    />
+  );
 }

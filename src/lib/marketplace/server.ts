@@ -289,6 +289,86 @@ export async function fetchMarketplaceCatalog(
   };
 }
 
+export async function fetchPublicMarketplaceHomeData(): Promise<{
+  user: MarketplaceUser | null;
+  auctions: AuctionItem[];
+  savedIds: string[];
+}> {
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) {
+    return { user: null, auctions: [], savedIds: [] };
+  }
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  let currentUser: MarketplaceUser | null = null;
+  let savedIds: string[] = [];
+
+  if (authUser) {
+    const [{ data: profile }, { data: rawSaved }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('email, role, full_name, avatar_url, verification_status, trust_score, is_suspended, is_demo')
+        .eq('id', authUser.id)
+        .maybeSingle(),
+      supabase.from('saved_items').select('auction_id').eq('user_id', authUser.id),
+    ]);
+
+    const role = normalizeRole(profile?.role ?? authUser.user_metadata?.role);
+    const email = profile?.email || authUser.email || '';
+    const phone = authUser.phone || '';
+    const fullName = profile?.full_name || '';
+
+    currentUser = {
+      id: authUser.id,
+      email,
+      phone,
+      fullName,
+      displayName: deriveDisplayName(fullName, email, phone),
+      role,
+      avatarUrl: profile?.avatar_url ?? null,
+      verificationStatus: (profile?.verification_status as VerificationStatus) ?? 'unverified',
+      trustScore: Number(profile?.trust_score ?? 50),
+      isSuspended: Boolean(profile?.is_suspended),
+      isDemo: Boolean(profile?.is_demo),
+    };
+    savedIds = (rawSaved ?? []).map((s) => s.auction_id);
+  }
+
+  await Promise.resolve(supabase.rpc('close_expired_auctions')).catch(() => {});
+
+  const { data: rawAuctions, error: auctionsError } = await supabase
+    .from('auctions')
+    .select(AUCTION_PUBLIC_COLUMNS)
+    .in('status', ['active', 'ended'])
+    .neq('moderation_status', 'removed')
+    .order('created_at', { ascending: false })
+    .limit(60);
+
+  if (auctionsError) {
+    console.error('Failed to fetch public homepage auctions:', auctionsError.message);
+    return { user: currentUser, auctions: [], savedIds };
+  }
+
+  const rows = (rawAuctions ?? []) as unknown as Array<Record<string, unknown>>;
+  const profileIds: string[] = [];
+  for (const row of rows) {
+    if (row.seller_id) profileIds.push(String(row.seller_id));
+    if (row.highest_bidder_id) profileIds.push(String(row.highest_bidder_id));
+  }
+
+  const profileMap = await fetchPublicProfilesMap(supabase, profileIds);
+  const auctions = rows.map((row) => mapRawAuctionRow(row, profileMap));
+
+  return {
+    user: currentUser,
+    auctions,
+    savedIds,
+  };
+}
+
 export async function fetchSavedAuctions(
   supabase: ServerSupabase,
   userId: string

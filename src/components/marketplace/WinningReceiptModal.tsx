@@ -15,11 +15,13 @@ import {
   Tag,
   Trophy,
   User,
+  Wand2,
   X,
   XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatINR } from '@/lib/marketplace/types';
+import { ReceiptPrinter } from '@/components/ui/receipt-printer';
 
 export interface ReceiptData {
   receiptId: string;
@@ -108,6 +110,7 @@ export function WinningReceiptModal({
   const [error, setError] = useState<string | null>(null);
   const [paymentBusy, setPaymentBusy] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [showThermalPrinter, setShowThermalPrinter] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const fetchedRef = useRef(false);
 
@@ -202,13 +205,23 @@ export function WinningReceiptModal({
           ref={printRef}
         >
           {/* Close button */}
-          <button
-            onClick={onClose}
-            className="no-print absolute right-4 top-4 z-10 rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
-            aria-label="Close receipt"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="no-print absolute right-4 top-4 z-10 flex items-center gap-2">
+            <button
+              onClick={() => setShowThermalPrinter((v) => !v)}
+              className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors flex items-center gap-1.5 shadow-sm"
+              title="Toggle interactive thermal printer experience"
+            >
+              <Printer className="h-3.5 w-3.5 text-emerald-600" />
+              <span>{showThermalPrinter ? 'Standard Invoice' : 'Thermal Simulator'}</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+              aria-label="Close receipt"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
           {/* Loading / Error states */}
           {loading && (
@@ -232,6 +245,24 @@ export function WinningReceiptModal({
           )}
 
           {receipt && !loading && (
+            showThermalPrinter ? (
+              <div className="p-4 flex flex-col items-center">
+                <ReceiptPrinter
+                  store="SnipeShield Escrow"
+                  address={`Verified Auction #${receipt.auctionId.slice(0, 8)}`}
+                  currency="₹"
+                  taxRate={0.02}
+                  items={[
+                    {
+                      name: receipt.productName.slice(0, 24),
+                      qty: 1,
+                      price: receipt.winningBid,
+                    },
+                  ]}
+                  className="min-h-[600px] w-full rounded-xl overflow-hidden"
+                />
+              </div>
+            ) : (
             <>
               {/* ── RECEIPT HEADER ── */}
               <div
@@ -485,6 +516,7 @@ export function WinningReceiptModal({
                 </div>
               </div>
             </>
+            )
           )}
         </div>
       </div>

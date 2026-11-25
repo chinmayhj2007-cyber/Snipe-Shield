@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   CreditCard,
+  FileText,
   Package,
   Star,
   Truck,
@@ -12,6 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useState } from 'react';
 import { MarketplaceNavbar } from '@/components/marketplace/MarketplaceNavbar';
+import { WinningReceiptModal } from '@/components/marketplace/WinningReceiptModal';
 import {
   type DisputeItem,
   formatINR,
@@ -47,6 +49,9 @@ export function OrdersClient({
   const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+
+  // Winning Receipt Modal state
+  const [receiptOrderId, setReceiptOrderId] = useState<string | null>(null);
 
   async function handleRazorpayCheckout(order: OrderItem) {
     setBusyId(order.id);
@@ -277,6 +282,17 @@ export function OrdersClient({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
+                      {isBuyer ? (
+                        <button
+                          type="button"
+                          onClick={() => setReceiptOrderId(order.id)}
+                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-950/40 px-3.5 text-xs font-medium text-emerald-200 hover:border-emerald-400/60 transition-colors"
+                        >
+                          <FileText className="h-3.5 w-3.5 text-emerald-400" />
+                          View Receipt
+                        </button>
+                      ) : null}
+
                       {isBuyer && order.status === 'pending_payment' ? (
                         <button
                           type="button"
@@ -480,6 +496,19 @@ export function OrdersClient({
           </section>
         ) : null}
       </main>
+
+      {/* Winning Receipt Modal */}
+      <WinningReceiptModal
+        orderId={receiptOrderId ?? ''}
+        isOpen={Boolean(receiptOrderId)}
+        onClose={() => setReceiptOrderId(null)}
+        onProceedToPayment={async (orderId) => {
+          const targetOrder = orders.find((o) => o.id === orderId);
+          if (targetOrder) {
+            await handleRazorpayCheckout(targetOrder);
+          }
+        }}
+      />
     </div>
   );
 }

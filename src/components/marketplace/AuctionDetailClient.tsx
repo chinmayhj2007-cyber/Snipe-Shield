@@ -6,7 +6,9 @@ import {
   Bookmark,
   Bot,
   Camera,
+  Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -14,10 +16,11 @@ import {
   FileCheck2,
   Gavel,
   History,
-  Info,
   Lock,
+  MoreHorizontal,
   Pause,
   Play,
+  Share2,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -25,6 +28,7 @@ import {
   TrendingUp,
   Trophy,
   Truck,
+  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -32,6 +36,7 @@ import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { CountdownTimer } from '@/components/marketplace/CountdownTimer';
 import { MarketplaceNavbar } from '@/components/marketplace/MarketplaceNavbar';
+import { WinningReceiptModal } from '@/components/marketplace/WinningReceiptModal';
 import { ShinyButton } from '@/components/ui/shiny-button';
 import { calculateTrueCost, computePriceInsights } from '@/lib/marketplace/intelligence';
 import { maskBidderName } from '@/lib/marketplace/privacy';
@@ -46,7 +51,6 @@ import {
   type MarketplaceUser,
 } from '@/lib/marketplace/types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import { WinningReceiptModal } from '@/components/marketplace/WinningReceiptModal';
 
 interface AuctionDetailClientProps {
   user: MarketplaceUser;
@@ -74,6 +78,7 @@ export function AuctionDetailClient({
   const router = useRouter();
   const bidInFlightRef = useRef(false);
   const saveInFlightRef = useRef(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const idempotencyKeyRef = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `bid_${Date.now()}`
   );
@@ -88,6 +93,15 @@ export function AuctionDetailClient({
   const [mountedNowMs, setMountedNowMs] = useState<number | null>(null);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
   const highestBidderRef = useRef<string | null>(initialAuction.highest_bidder_id);
+
+  // UI state for clean collapsible sections & secondary/tertiary actions
+  const [specsOpen, setSpecsOpen] = useState(true);
+  const [passportOpen, setPassportOpen] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [automatedOpen, setAutomatedOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [fairCloseInfoOpen, setFairCloseInfoOpen] = useState(false);
+  const [copiedShare, setCopiedShare] = useState(false);
 
   // AutoBid AI panel state
   const [autoBidOpen, setAutoBidOpen] = useState(false);
@@ -104,7 +118,9 @@ export function AuctionDetailClient({
   const [autoBidLoading, setAutoBidLoading] = useState(false);
 
   // Asset Passport upload state (for seller)
-  const [docType, setDocType] = useState<'invoice' | 'authenticity_certificate' | 'ownership_record' | 'condition_report' | 'supporting_doc'>('invoice');
+  const [docType, setDocType] = useState<
+    'invoice' | 'authenticity_certificate' | 'ownership_record' | 'condition_report' | 'supporting_doc'
+  >('invoice');
   const [docTitle, setDocTitle] = useState('');
   const [docNotes, setDocNotes] = useState('');
   const [docSubmitting, setDocSubmitting] = useState(false);
@@ -131,6 +147,18 @@ export function AuctionDetailClient({
   useEffect(() => setMyProxyMax(initialMyProxyMax), [initialMyProxyMax]);
   useEffect(() => setMyAutoBid(initialMyAutoBid), [initialMyAutoBid]);
   useEffect(() => setFailedUrls(new Set()), [initialAuction.id]);
+
+  // Close tertiary overflow menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [menuOpen]);
 
   // Track view & recently viewed once per visit
   useEffect(() => {
@@ -304,6 +332,33 @@ export function AuctionDetailClient({
     }
   }
 
+  async function handleShare() {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: auction.title,
+          url: window.location.href,
+        });
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopiedShare(true);
+        window.setTimeout(() => setCopiedShare(false), 2000);
+      }
+    } catch {
+      // Ignore share cancellation
+    }
+  }
+
+  function scrollToSection(id: string) {
+    setMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   async function handlePlaceBid(e?: FormEvent) {
     e?.preventDefault();
     if (bidInFlightRef.current || submitting) return;
@@ -360,7 +415,6 @@ export function AuctionDetailClient({
         return;
       }
 
-      // Rotate idempotency key only after successful accepted transaction
       idempotencyKeyRef.current =
         typeof crypto !== 'undefined' && crypto.randomUUID
           ? crypto.randomUUID()
@@ -383,12 +437,12 @@ export function AuctionDetailClient({
       if (data.is_leading) {
         setSuccessMessage(
           data.extended
-            ? `Leading bid locked via ShieldLock! SnipeShield extended closing by ${auction.anti_snipe_extend_sec ?? 30}s.`
-            : 'Bid accepted by ShieldLock! You are currently the highest bidder.'
+            ? `Leading bid locked. FairClose extended closing by +${auction.anti_snipe_extend_sec ?? 30}s.`
+            : 'Bid accepted. You are currently the highest bidder.'
         );
       } else {
         setSuccessMessage(
-          `Another bidder's AutoBid/Proxy ceiling outbid your offer. Current price: ${formatINR(
+          `Outbid by an active proxy ceiling. Current price: ${formatINR(
             Number(data.current_price ?? minNextBid)
           )}.`
         );
@@ -495,12 +549,16 @@ export function AuctionDetailClient({
     setActionLoading(true);
     try {
       const res = await fetch(`/api/auctions/${auction.id}/close`, { method: 'POST' });
-      const data = (await res.json()) as { closed?: boolean; orderId?: string; order?: { id: string }; error?: string };
+      const data = (await res.json()) as {
+        closed?: boolean;
+        orderId?: string;
+        order?: { id: string };
+        error?: string;
+      };
       if (!res.ok) {
         setErrorMessage(data.error ?? 'Unable to finalize order.');
         return;
       }
-      // Try to get the order ID from the response so we can show the receipt modal
       const oid = data.orderId ?? data.order?.id ?? null;
       if (oid) {
         const seenKey = `ss_receipt_seen_${oid}`;
@@ -508,7 +566,7 @@ export function AuctionDetailClient({
           sessionStorage.setItem(seenKey, '1');
           setReceiptOrderId(oid);
           setReceiptOpen(true);
-          return; // Stay on page — receipt modal is open
+          return;
         }
       }
       router.push('/orders');
@@ -518,7 +576,6 @@ export function AuctionDetailClient({
   }
 
   async function handleReceiptPayment(orderId: string) {
-    // Initiates Razorpay payment for the winning order and verifies it server-side
     const createRes = await fetch('/api/payments/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -583,6 +640,12 @@ export function AuctionDetailClient({
   const isLeading = auction.highest_bidder_id === user.id;
   const isOwnListing = auction.seller_id === user.id;
 
+  const totalBidsCount = Math.max(auction.bid_count ?? 0, bids.length);
+  const uniqueBiddersCount = useMemo(
+    () => new Set(bids.map((b) => b.bidder_id)).size,
+    [bids]
+  );
+
   const trueCost = useMemo(
     () => calculateTrueCost(Number(bidAmount) || minNextBid, auction.shipping_cost ?? 0),
     [bidAmount, minNextBid, auction.shipping_cost]
@@ -596,364 +659,611 @@ export function AuctionDetailClient({
   return (
     <>
       <div className="smoky-ambient-page min-h-dvh text-white">
-      <MarketplaceNavbar user={user} />
+        <MarketplaceNavbar user={user} />
 
-      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href={backHref}
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-white/80 backdrop-blur-md transition hover:border-white/35 hover:text-white"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Back to Marketplace
-          </Link>
-
-          <div className="flex items-center gap-2">
-            {auction.is_demo ? (
-              <span className="rounded-full border border-amber-300/40 bg-amber-950/60 px-3 py-1 text-[11px] font-semibold text-amber-200">
-                DEMO LISTING
-              </span>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={handleToggleSave}
-              disabled={savingWatchlist}
-              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md transition ${
-                isSaved
-                  ? 'border-white/45 bg-[#e2e4e8] text-neutral-950'
-                  : 'border-white/20 bg-white/[0.05] text-white hover:border-white/40'
-              }`}
+        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+          {/* Minimal Top Bar: Breadcrumb + Secondary / Tertiary Controls */}
+          <header className="mb-8 flex items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
+            <Link
+              href={backHref}
+              className="inline-flex items-center gap-2 text-xs font-medium text-white/60 transition hover:text-white"
             >
-              <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-current' : ''}`} />
-              {isSaved ? 'Saved' : 'Save Item'}
-            </button>
-          </div>
-        </div>
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Back to Marketplace</span>
+            </Link>
 
-        {/* SNIPESHIELD PROTECTION ACTIVE Banner (Part 7) */}
-        <section className="mb-6 rounded-[28px] border border-emerald-300/30 bg-emerald-950/25 p-4 backdrop-blur-xl sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-300/35 bg-emerald-950/70">
-                <ShieldCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-xs font-bold tracking-wider text-emerald-200">
-                  SNIPESHIELD PROTECTION ACTIVE (FAIRClose)
-                </p>
-                <p className="text-[11px] text-white/75">
-                  Valid bids in final {auction.anti_snipe_window_sec ?? 30}s extend closing by{' '}
-                  +{auction.anti_snipe_extend_sec ?? 30}s (max {auction.max_extensions ?? 10}{' '}
-                  extensions) via SHIELDLOCK row locking.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-[11px] text-white/80">
-              <div>
-                <span className="text-white/50">Original Close: </span>
-                <span className="font-medium">
-                  {new Date(auction.original_ends_at || auction.ends_at).toLocaleString()}
+            <div className="flex items-center gap-2">
+              {auction.is_demo ? (
+                <span className="rounded-full border border-amber-400/25 bg-amber-950/40 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-200">
+                  Demo
                 </span>
-              </div>
-              <div>
-                <span className="text-white/50">Current Close: </span>
-                <span className="font-semibold text-white">
-                  {new Date(auction.ends_at).toLocaleString()}
-                </span>
-              </div>
-              <span className="rounded-full border border-emerald-300/30 bg-emerald-950/60 px-2.5 py-0.5 font-semibold text-emerald-200">
-                {auction.extensions_count} Extension{auction.extensions_count === 1 ? '' : 's'}
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr]">
-          {/* Left Column: Gallery + Description + Shipping + Asset Passport */}
-          <div className="space-y-6">
-            <div className="overflow-hidden rounded-[32px] border border-white/20 bg-[#0b0c10] backdrop-blur-xl">
-              <div className="aspect-[16/11] w-full overflow-hidden">
-                {selectedImage && !failedUrls.has(selectedImage) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedImage}
-                    alt={auction.title}
-                    onError={() =>
-                      setFailedUrls((prev) => new Set(prev).add(selectedImage))
-                    }
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-b from-[#171a21] to-[#08090c]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/snipe-shield-logo.webp"
-                      alt="Snipe Shield"
-                      className="h-24 w-24 object-contain opacity-70"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {gallery.length > 1 ? (
-                <div className="flex gap-2.5 overflow-x-auto border-t border-white/10 p-3">
-                  {gallery.map((url, idx) => (
-                    <button
-                      key={url}
-                      type="button"
-                      onClick={() => setSelectedImage(url)}
-                      className={`relative h-16 w-20 shrink-0 cursor-pointer overflow-hidden rounded-xl border transition ${
-                        selectedImage === url
-                          ? 'border-white ring-2 ring-white/30'
-                          : 'border-white/15 opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={failedUrls.has(url) ? '/snipe-shield-logo.webp' : url}
-                        alt={`Thumbnail ${idx + 1}`}
-                        onError={() => setFailedUrls((prev) => new Set(prev).add(url))}
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
               ) : null}
-            </div>
 
-            {/* Item Details & Shipping */}
-            <section className="rounded-[28px] border border-white/15 bg-white/[0.035] p-6 backdrop-blur-xl">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-white/70">
-                Item Details &amp; Fulfillment
-              </h2>
-              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/80">
-                {auction.description}
-              </p>
+              {/* Secondary: Watchlist / Save */}
+              <button
+                type="button"
+                onClick={handleToggleSave}
+                disabled={savingWatchlist}
+                aria-label={isSaved ? 'Remove from watchlist' : 'Save to watchlist'}
+                title={isSaved ? 'Saved to Watchlist' : 'Save to Watchlist'}
+                className={`inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition ${
+                  isSaved
+                    ? 'border-white/40 bg-white text-neutral-950'
+                    : 'border-white/15 bg-white/[0.03] text-white/80 hover:border-white/30 hover:text-white'
+                }`}
+              >
+                <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Watch'}</span>
+              </button>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/10 pt-4 text-xs sm:grid-cols-3">
-                <div>
-                  <span className="text-white/50">Category</span>
-                  <p className="mt-0.5 font-medium text-white">{auction.category}</p>
-                </div>
-                <div>
-                  <span className="text-white/50">Condition</span>
-                  <div className="mt-0.5 flex items-center gap-1.5">
-                    <span className="font-semibold text-white">{auction.condition}</span>
-                    {auction.defect_description || (auction.condition_proof_urls && auction.condition_proof_urls.length > 0) ? (
-                      <span className="rounded-full border border-amber-400/40 bg-amber-950/60 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
-                        Evidence Verified
-                      </span>
-                    ) : null}
+              {/* Secondary: Share */}
+              <button
+                type="button"
+                onClick={handleShare}
+                aria-label="Share auction link"
+                title="Share auction link"
+                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/[0.03] text-white/80 transition hover:border-white/30 hover:text-white"
+              >
+                {copiedShare ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-300" />
+                ) : (
+                  <Share2 className="h-3.5 w-3.5" />
+                )}
+              </button>
+
+              {/* Tertiary: Overflow Menu */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((o) => !o)}
+                  aria-label="More auction options"
+                  aria-expanded={menuOpen}
+                  className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/[0.03] text-white/80 transition hover:border-white/30 hover:text-white"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+
+                {menuOpen ? (
+                  <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/15 bg-[#111319]/95 py-1.5 shadow-2xl backdrop-blur-xl">
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('bidding-history')}
+                      className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2 text-left text-xs text-white/85 transition hover:bg-white/[0.06] hover:text-white"
+                    >
+                      <Gavel className="h-3.5 w-3.5 text-white/55" />
+                      View Bidding History
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPassportOpen(true);
+                        scrollToSection('asset-passport');
+                      }}
+                      className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2 text-left text-xs text-white/85 transition hover:bg-white/[0.06] hover:text-white"
+                    >
+                      <FileCheck2 className="h-3.5 w-3.5 text-white/55" />
+                      Asset Passport (SHA-256)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFairCloseInfoOpen((v) => !v);
+                        setMenuOpen(false);
+                      }}
+                      className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2 text-left text-xs text-white/85 transition hover:bg-white/[0.06] hover:text-white"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+                      FairClose Anti-Snipe Info
+                    </button>
+                    <Link
+                      href={`/sellers/${auction.seller_id}`}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-xs text-white/85 transition hover:bg-white/[0.06] hover:text-white"
+                    >
+                      <Store className="h-3.5 w-3.5 text-white/55" />
+                      Seller Storefront
+                    </Link>
                   </div>
-                </div>
-                <div>
-                  <span className="text-white/50">Seller</span>
-                  <Link
-                    href={`/sellers/${auction.seller_id}`}
-                    className="mt-0.5 flex items-center gap-1 font-medium text-white hover:underline"
-                  >
-                    <span>{auction.seller_name}</span>
-                    {auction.seller_verified ? (
-                      <BadgeCheck className="h-3.5 w-3.5 text-emerald-300" />
-                    ) : null}
-                  </Link>
-                </div>
+                ) : null}
               </div>
+            </div>
+          </header>
 
-              {/* Defect Description Section */}
-              {auction.defect_description ? (
-                <div className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-950/30 p-4 text-xs">
-                  <div className="flex items-center gap-2 text-amber-300 font-semibold mb-1.5">
-                    <ShieldAlert className="h-4 w-4" />
-                    <span>Seller&apos;s Condition &amp; Defect Description</span>
-                  </div>
-                  <p className="whitespace-pre-line text-white/90 leading-relaxed pl-6">
-                    {auction.defect_description}
+          {/* Optional FairClose Anti-Snipe Drawer (toggled from badge or overflow menu) */}
+          {fairCloseInfoOpen ? (
+            <div className="mb-8 flex items-start justify-between gap-4 rounded-xl border border-emerald-400/25 bg-emerald-950/20 px-4 py-3 text-xs text-white/80">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+                <div>
+                  <p className="font-medium text-emerald-200">
+                    SnipeShield FairClose Protection Active
+                  </p>
+                  <p className="mt-0.5 text-white/65">
+                    Valid bids in the final {auction.anti_snipe_window_sec ?? 30}s extend closing by +
+                    {auction.anti_snipe_extend_sec ?? 30}s (max {auction.max_extensions ?? 10}{' '}
+                    extensions). {auction.extensions_count} extension
+                    {auction.extensions_count === 1 ? '' : 's'} applied so far.
                   </p>
                 </div>
-              ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => setFairCloseInfoOpen(false)}
+                className="cursor-pointer rounded-md p-1 text-white/50 hover:text-white"
+                aria-label="Dismiss protection details"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : null}
 
-              {/* Condition Proof Images Gallery */}
-              {auction.condition_proof_urls && auction.condition_proof_urls.length > 0 ? (
-                <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.025] p-4">
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Camera className="h-4 w-4 text-amber-300" />
-                      <h3 className="text-xs font-semibold text-white">
-                        Condition Proof ({auction.condition_proof_urls.length} images)
-                      </h3>
+          {/* Main 2-Column Auction House Layout */}
+          <div className="grid items-start gap-8 lg:grid-cols-[1.2fr_0.85fr] lg:gap-12">
+            {/* LEFT COLUMN: Product Gallery, Metadata, Seller, & Collapsible Details */}
+            <div className="order-1 space-y-8">
+              {/* Product Image Gallery */}
+              <div className="space-y-3">
+                <div className="aspect-[16/11] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#0b0c10]">
+                  {selectedImage && !failedUrls.has(selectedImage) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedImage}
+                      alt={auction.title}
+                      onError={() =>
+                        setFailedUrls((prev) => new Set(prev).add(selectedImage))
+                      }
+                      className="h-full w-full object-cover transition duration-500"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-b from-[#151820] to-[#08090c]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/snipe-shield-logo.webp"
+                        alt="Snipe Shield"
+                        className="h-20 w-20 object-contain opacity-65"
+                      />
                     </div>
-                    <span className="text-[10px] text-white/50">
-                      Click any photo to enlarge in lightbox
-                    </span>
-                  </div>
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                    {auction.condition_proof_urls.map((url, idx) => (
+                {gallery.length > 1 ? (
+                  <div className="flex gap-2.5 overflow-x-auto pb-1">
+                    {gallery.map((url, idx) => (
                       <button
                         key={url}
                         type="button"
-                        onClick={() => setLightboxIndex(idx)}
-                        className="group relative aspect-square overflow-hidden rounded-xl border border-white/20 bg-black/40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        onClick={() => setSelectedImage(url)}
+                        className={`relative h-16 w-20 shrink-0 cursor-pointer overflow-hidden rounded-xl border transition ${
+                          selectedImage === url
+                            ? 'border-white/70 ring-1 ring-white/40'
+                            : 'border-white/10 opacity-60 hover:opacity-100'
+                        }`}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={url}
-                          alt={`Condition proof photo ${idx + 1}`}
-                          className="h-full w-full object-cover transition group-hover:scale-105"
+                          src={failedUrls.has(url) ? '/snipe-shield-logo.webp' : url}
+                          alt={`Thumbnail ${idx + 1}`}
+                          onError={() => setFailedUrls((prev) => new Set(prev).add(url))}
+                          className="h-full w-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                          <Eye className="h-4 w-4 text-white" />
-                        </div>
                       </button>
                     ))}
                   </div>
+                ) : null}
+              </div>
+
+              {/* Product Header: Category, Condition, Title */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                  <span className="font-medium uppercase tracking-[0.14em] text-white/50">
+                    {auction.category}
+                  </span>
+                  <span className="text-white/20">/</span>
+                  <span className="rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-white/90">
+                    {auction.condition}
+                  </span>
+                  {auction.defect_description ||
+                  (auction.condition_proof_urls && auction.condition_proof_urls.length > 0) ? (
+                    <span className="rounded-full border border-amber-400/30 bg-amber-950/40 px-2.5 py-0.5 text-[11px] font-medium text-amber-200">
+                      Condition Proof Verified
+                    </span>
+                  ) : null}
                 </div>
+
+                <h1 className="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+                  {auction.title}
+                </h1>
+              </div>
+
+              {/* Compact Seller Bar */}
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-xs font-semibold text-white">
+                    {auction.seller_name.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-medium text-white">
+                        {auction.seller_name}
+                      </span>
+                      {auction.seller_verified ? (
+                        <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+                      ) : null}
+                    </div>
+                    <p className="text-[11px] text-white/50">
+                      {auction.seller_verified ? 'Verified Auction Seller' : 'Marketplace Seller'}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={`/sellers/${auction.seller_id}`}
+                  className="shrink-0 text-xs font-medium text-white/70 transition hover:text-white"
+                >
+                  View Store &rarr;
+                </Link>
+              </div>
+
+              {/* Condition & Defect Proof Disclosure (when applicable) */}
+              {auction.defect_description ||
+              (auction.condition_proof_urls && auction.condition_proof_urls.length > 0) ? (
+                <section className="space-y-4 rounded-xl border border-amber-400/20 bg-amber-950/15 p-5">
+                  {auction.defect_description ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-200">
+                        <ShieldAlert className="h-4 w-4 shrink-0" />
+                        <span>Reported Condition &amp; Defects</span>
+                      </div>
+                      <p className="whitespace-pre-line pl-6 text-xs leading-relaxed text-white/80">
+                        {auction.defect_description}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {auction.condition_proof_urls && auction.condition_proof_urls.length > 0 ? (
+                    <div className="space-y-2.5 pt-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5 font-medium text-white/85">
+                          <Camera className="h-3.5 w-3.5 text-amber-300" />
+                          Evidence Photos ({auction.condition_proof_urls.length})
+                        </span>
+                        <span className="text-[11px] text-white/45">Click to enlarge</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        {auction.condition_proof_urls.map((url, idx) => (
+                          <button
+                            key={url}
+                            type="button"
+                            onClick={() => setLightboxIndex(idx)}
+                            className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-white/15 bg-black/40 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={url}
+                              alt={`Condition proof photo ${idx + 1}`}
+                              className="h-full w-full object-cover transition group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition group-hover:opacity-100">
+                              <Eye className="h-4 w-4 text-white" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
               ) : null}
 
-              <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-xs text-white/75">
-                <div className="flex items-start gap-2">
-                  <Truck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/55" />
-                  <span>
-                    <strong className="text-white">Shipping:</strong>{' '}
-                    {auction.shipping_details || 'Tracked courier dispatch within 48h.'}{' '}
-                    ({auction.shipping_cost ? formatINR(auction.shipping_cost) : 'Free Shipping'})
+              {/* Collapsible: Description & Specifications */}
+              <section className="border-t border-white/10 pt-5">
+                <button
+                  type="button"
+                  onClick={() => setSpecsOpen((v) => !v)}
+                  className="flex w-full cursor-pointer items-center justify-between text-left"
+                >
+                  <span className="text-sm font-semibold tracking-tight text-white">
+                    Description &amp; Specifications
                   </span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/55" />
-                  <span>
-                    <strong className="text-white">Delivery:</strong>{' '}
-                    {auction.delivery_info || '3-5 business days pan-India.'}
-                  </span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/55" />
-                  <span>
-                    <strong className="text-white">Return Policy:</strong>{' '}
-                    {auction.return_policy || '7-day SnipeShield escrow protection.'}
-                  </span>
-                </div>
-              </div>
-            </section>
+                  <ChevronDown
+                    className={`h-4 w-4 text-white/50 transition-transform ${
+                      specsOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
 
-            {/* Asset Passport (Part 12) */}
-            <section className="rounded-[28px] border border-white/15 bg-white/[0.035] p-6 backdrop-blur-xl">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <FileCheck2 className="h-4 w-4 text-emerald-300" aria-hidden="true" />
-                  Asset Passport &amp; Tamper-Evident Records
-                </h2>
-                <span className="text-[11px] text-white/55">SHA-256 Verified</span>
-              </div>
-              <p className="mt-1 text-[11px] text-white/55">
-                Note: Seller-submitted documents carry SHA-256 fingerprints for tamper evidence; only
-                records marked &ldquo;Independently Verified&rdquo; have been audited by an admin.
-              </p>
+                {specsOpen ? (
+                  <div className="mt-4 space-y-5">
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-white/75">
+                      {auction.description}
+                    </p>
 
-              {documents.length > 0 ? (
-                <ul className="mt-4 space-y-2.5">
-                  {documents.map((doc) => (
-                    <li
-                      key={doc.id}
-                      className="rounded-2xl border border-white/15 bg-white/[0.03] p-3 text-xs"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="font-semibold text-white">{doc.title}</span>
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                            doc.verification_status === 'independently_verified'
-                              ? 'border-emerald-300/35 bg-emerald-950/60 text-emerald-200'
-                              : 'border-white/20 bg-white/10 text-white/75'
-                          }`}
-                        >
-                          {doc.verification_status.replace('_', ' ')}
+                    <div className="grid grid-cols-2 gap-4 border-t border-white/[0.08] pt-4 text-xs sm:grid-cols-3">
+                      <div>
+                        <span className="text-white/45">Starting Price</span>
+                        <p className="mt-0.5 font-medium tabular-nums text-white">
+                          {formatINR(auction.starting_price)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-white/45">Min Increment</span>
+                        <p className="mt-0.5 font-medium tabular-nums text-white">
+                          {formatINR(auction.min_increment)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-white/45">Condition</span>
+                        <p className="mt-0.5 font-medium text-white">{auction.condition}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 border-t border-white/[0.08] pt-4 text-xs text-white/70">
+                      <div className="flex items-start gap-2.5">
+                        <Truck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45" />
+                        <span>
+                          <strong className="font-medium text-white">Shipping:</strong>{' '}
+                          {auction.shipping_details || 'Tracked courier dispatch within 48h.'} (
+                          {auction.shipping_cost ? formatINR(auction.shipping_cost) : 'Free'})
                         </span>
                       </div>
-                      {doc.notes ? (
-                        <p className="mt-1 text-[11px] text-white/65">{doc.notes}</p>
-                      ) : null}
-                      <p className="mt-1.5 break-all font-mono text-[10px] text-white/45">
-                        SHA-256: {doc.sha256_hash}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-xs text-white/55">
-                  No Asset Passport records attached to this listing yet.
-                </p>
-              )}
-
-              {isOwnListing ? (
-                <form
-                  onSubmit={handleAddPassportDoc}
-                  className="mt-4 space-y-2.5 border-t border-white/10 pt-4"
-                >
-                  <p className="text-xs font-medium text-white/85">
-                    Attach Supporting Document Fingerprint
-                  </p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <select
-                      value={docType}
-                      onChange={(e) => setDocType(e.target.value as typeof docType)}
-                      className="h-9 rounded-full border border-white/20 bg-[#0d1016] px-3 text-xs text-white"
-                    >
-                      <option value="invoice">Purchase Invoice</option>
-                      <option value="authenticity_certificate">Authenticity Certificate</option>
-                      <option value="ownership_record">Ownership Record</option>
-                      <option value="condition_report">Condition Report</option>
-                      <option value="supporting_doc">Supporting Document</option>
-                    </select>
-                    <input
-                      type="text"
-                      value={docTitle}
-                      onChange={(e) => setDocTitle(e.target.value)}
-                      placeholder="Document title / serial ref"
-                      className="h-9 rounded-full border border-white/20 bg-white/[0.05] px-3 text-xs text-white placeholder:text-white/40"
-                    />
+                      <div className="flex items-start gap-2.5">
+                        <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45" />
+                        <span>
+                          <strong className="font-medium text-white">Delivery:</strong>{' '}
+                          {auction.delivery_info || '3-5 business days pan-India.'}
+                        </span>
+                      </div>
+                      <div className="flex items-start gap-2.5">
+                        <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45" />
+                        <span>
+                          <strong className="font-medium text-white">Escrow &amp; Returns:</strong>{' '}
+                          {auction.return_policy || '7-day SnipeShield escrow protection.'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    value={docNotes}
-                    onChange={(e) => setDocNotes(e.target.value)}
-                    placeholder="Serial number, invoice date, or inspection notes"
-                    className="h-9 w-full rounded-full border border-white/20 bg-white/[0.05] px-3 text-xs text-white placeholder:text-white/40"
-                  />
-                  <button
-                    type="submit"
-                    disabled={docSubmitting}
-                    className="smoky-cta-btn h-9 cursor-pointer rounded-full px-4 text-xs font-medium text-white disabled:opacity-50"
-                  >
-                    {docSubmitting ? 'Hashing...' : 'Generate SHA-256 Passport Record'}
-                  </button>
-                </form>
-              ) : null}
-            </section>
-          </div>
+                ) : null}
+              </section>
 
-          {/* Right Column: Live Bid Engine + TrueCost + AutoBid + Price Insights + History */}
-          <div className="space-y-6">
-            <section className="smoky-glass-card rounded-[34px] border border-white/20 p-6 backdrop-blur-2xl sm:p-7">
-              <div className="relative z-10 space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.06] px-3 py-1 text-[11px] font-medium text-white/85">
-                    <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-                    SHIELDLOCK Serialized
-                  </span>
+              {/* Collapsible: Asset Passport (SHA-256) */}
+              <section id="asset-passport" className="border-t border-white/10 pt-5">
+                <button
+                  type="button"
+                  onClick={() => setPassportOpen((v) => !v)}
+                  className="flex w-full cursor-pointer items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileCheck2 className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+                    <span className="text-sm font-semibold tracking-tight text-white">
+                      Asset Passport &amp; Records
+                    </span>
+                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-white/60">
+                      {documents.length}
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 text-white/50 transition-transform ${
+                      passportOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {passportOpen ? (
+                  <div className="mt-4 space-y-4">
+                    <p className="text-[11px] leading-relaxed text-white/50">
+                      Seller-submitted documents carry SHA-256 fingerprints for tamper evidence.
+                      Records marked &ldquo;Independently Verified&rdquo; have been audited by an
+                      admin.
+                    </p>
+
+                    {documents.length > 0 ? (
+                      <ul className="space-y-2.5">
+                        {documents.map((doc) => (
+                          <li
+                            key={doc.id}
+                            className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-medium text-white">{doc.title}</span>
+                              <span
+                                className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                                  doc.verification_status === 'independently_verified'
+                                    ? 'border-emerald-400/30 bg-emerald-950/50 text-emerald-200'
+                                    : 'border-white/15 bg-white/[0.05] text-white/70'
+                                }`}
+                              >
+                                {doc.verification_status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            {doc.notes ? (
+                              <p className="mt-1 text-[11px] text-white/60">{doc.notes}</p>
+                            ) : null}
+                            <p className="mt-1.5 break-all font-mono text-[10px] text-white/40">
+                              SHA-256: {doc.sha256_hash}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-white/50">
+                        No Asset Passport records attached to this listing yet.
+                      </p>
+                    )}
+
+                    {isOwnListing ? (
+                      <form
+                        onSubmit={handleAddPassportDoc}
+                        className="space-y-2.5 border-t border-white/10 pt-4"
+                      >
+                        <p className="text-xs font-medium text-white/80">
+                          Attach Supporting Document Fingerprint
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <select
+                            value={docType}
+                            onChange={(e) => setDocType(e.target.value as typeof docType)}
+                            className="h-9 rounded-lg border border-white/15 bg-[#0d1016] px-3 text-xs text-white"
+                          >
+                            <option value="invoice">Purchase Invoice</option>
+                            <option value="authenticity_certificate">
+                              Authenticity Certificate
+                            </option>
+                            <option value="ownership_record">Ownership Record</option>
+                            <option value="condition_report">Condition Report</option>
+                            <option value="supporting_doc">Supporting Document</option>
+                          </select>
+                          <input
+                            type="text"
+                            value={docTitle}
+                            onChange={(e) => setDocTitle(e.target.value)}
+                            placeholder="Document title / serial ref"
+                            className="h-9 rounded-lg border border-white/15 bg-white/[0.04] px-3 text-xs text-white placeholder:text-white/40"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={docNotes}
+                          onChange={(e) => setDocNotes(e.target.value)}
+                          placeholder="Serial number, invoice date, or inspection notes"
+                          className="h-9 w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 text-xs text-white placeholder:text-white/40"
+                        />
+                        <button
+                          type="submit"
+                          disabled={docSubmitting}
+                          className="smoky-cta-btn h-9 cursor-pointer rounded-lg px-4 text-xs font-medium text-white disabled:opacity-50"
+                        >
+                          {docSubmitting ? 'Hashing...' : 'Generate SHA-256 Passport Record'}
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                ) : null}
+              </section>
+
+              {/* Collapsible: TrueCost & Price Insights */}
+              <section className="border-t border-white/10 pt-5">
+                <button
+                  type="button"
+                  onClick={() => setInsightsOpen((v) => !v)}
+                  className="flex w-full cursor-pointer items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-white/70" />
+                    <span className="text-sm font-semibold tracking-tight text-white">
+                      TrueCost Estimator &amp; Market Insights
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 text-white/50 transition-transform ${
+                      insightsOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {insightsOpen ? (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 text-xs">
+                      <p className="font-medium text-white">
+                        Estimated Total ({formatINR(trueCost.winningBid)})
+                      </p>
+                      <div className="mt-3 space-y-1.5 text-[11px] text-white/65">
+                        <div className="flex justify-between">
+                          <span>Hammer Bid</span>
+                          <span className="tabular-nums">{formatINR(trueCost.winningBid)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Escrow Fee (2.5%, cap ₹2,500)</span>
+                          <span className="tabular-nums">{formatINR(trueCost.platformFee)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Shipping</span>
+                          <span className="tabular-nums">
+                            {trueCost.shippingCost ? formatINR(trueCost.shippingCost) : 'Free'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>GST (18% on fee)</span>
+                          <span className="tabular-nums">{formatINR(trueCost.taxAmount)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-white/10 pt-2 font-semibold text-white">
+                          <span>Total Payable</span>
+                          <span className="tabular-nums">{formatINR(trueCost.totalPayable)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 text-xs">
+                      <p className="flex items-center gap-1.5 font-medium text-white">
+                        <TrendingUp className="h-3.5 w-3.5 text-white/65" />
+                        Market Range ({auction.category})
+                      </p>
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+                        <div className="rounded-lg border border-white/10 bg-black/30 p-2">
+                          <span className="text-white/45">Low</span>
+                          <p className="mt-0.5 font-semibold tabular-nums text-white">
+                            {formatINR(priceInsight.lowEstimate)}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-white/20 bg-white/[0.05] p-2">
+                          <span className="text-white/65">Median</span>
+                          <p className="mt-0.5 font-semibold tabular-nums text-white">
+                            {formatINR(priceInsight.medianEstimate)}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-white/10 bg-black/30 p-2">
+                          <span className="text-white/45">High</span>
+                          <p className="mt-0.5 font-semibold tabular-nums text-white">
+                            {formatINR(priceInsight.highEstimate)}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="mt-2.5 text-[10px] leading-relaxed text-white/45">
+                        {priceInsight.basisNote}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            </div>
+
+            {/* RIGHT COLUMN: Sticky Live Bidding Panel */}
+            <aside className="order-2 lg:sticky lg:top-24">
+              <div className="rounded-2xl border border-white/15 bg-[#0c0e13]/90 p-6 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                {/* Status + Timer Row */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-2">
+                    {phase === 'live' && !auction.paused ? (
+                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                        Live Auction
+                      </span>
+                    ) : auction.paused ? (
+                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300">
+                        Paused
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                        Auction Ended
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setFairCloseInfoOpen((v) => !v)}
+                      title="Protected by ShieldLock & FairClose Anti-Sniping"
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/65 transition hover:border-white/25 hover:text-white"
+                    >
+                      <Lock className="h-2.5 w-2.5 text-emerald-300" />
+                      FairClose
+                    </button>
+                  </div>
 
                   <CountdownTimer
                     startsAt={auction.starts_at}
                     endsAt={auction.ends_at}
                     status={auction.status}
+                    compact
                     auctionId={auction.id}
                     onExpire={async () => {
-                      // Refresh page data so auction state reflects 'ended'
                       router.refresh();
-                      // If the current user is the winner, attempt to auto-open receipt
-                      // We need to fetch the order after the refresh; use a short delay
                       if (
                         auction.highest_bidder_id === user.id &&
                         (!auction.reserve_price || auction.current_price >= auction.reserve_price)
@@ -979,122 +1289,92 @@ export function AuctionDetailClient({
                             }
                           }
                         } catch {
-                          // Silently ignore — the user can still click "Proceed to Winner Checkout"
+                          // Silently ignore — user can click Proceed to Winner Checkout
                         }
                       }
                     }}
                   />
                 </div>
 
-                <h1 className="text-2xl font-semibold leading-snug tracking-tight text-white">
-                  {auction.title}
-                </h1>
-
-                {auction.paused ? (
-                  <div className="rounded-2xl border border-amber-300/35 bg-amber-950/50 px-4 py-2 text-xs text-amber-100">
-                    This auction is currently paused by the seller.
-                  </div>
-                ) : null}
-
-                <div className="rounded-3xl border border-white/20 bg-white/[0.05] p-4 backdrop-blur-md">
-                  <div className="flex items-center justify-between gap-3">
+                {/* Current Highest Bid */}
+                <div className="py-5">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/50">
                         {phase === 'ended' || auction.status === 'ended'
                           ? auction.highest_bidder_id
                             ? 'Final Winning Bid'
                             : 'Starting Price (Unsold)'
                           : auction.highest_bidder_id
                             ? 'Current Highest Bid'
-                            : 'Starting Price'}
+                            : 'Starting Bid'}
                       </p>
-                      <p className="mt-0.5 text-3xl font-semibold tracking-tight text-white">
+                      <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-white">
                         {formatINR(auction.current_price)}
                       </p>
                     </div>
 
                     {isLeading ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/35 bg-emerald-950/60 px-3 py-1 text-xs font-semibold text-emerald-200">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-950/50 px-3 py-1 text-[11px] font-medium text-emerald-200">
                         <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
-                        {phase === 'ended' || auction.status === 'ended' ? 'Winning Bidder' : "You're Leading"}
+                        {phase === 'ended' || auction.status === 'ended' ? 'Winner' : 'Leading'}
                       </span>
                     ) : null}
                   </div>
 
-                  {/* Condition preview banner before bidding */}
-                  <div className="mt-2.5 flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs">
-                    <span className="text-white/60">Condition:</span>
-                    <span className="font-semibold text-white">{auction.condition}</span>
-                  </div>
-
-                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-xs text-white/65">
-                    <span>Min Increment: {formatINR(auction.min_increment)}</span>
-                    <span>Next Min Bid: {formatINR(minNextBid)}</span>
+                  {/* Active Bidders & Min Next Bid */}
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.08] pt-3.5 text-xs text-white/60">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-white/45" />
+                      <strong className="font-medium text-white">{uniqueBiddersCount}</strong> active{' '}
+                      {uniqueBiddersCount === 1 ? 'bidder' : 'bidders'} ({totalBidsCount}{' '}
+                      {totalBidsCount === 1 ? 'bid' : 'bids'})
+                    </span>
+                    <span className="tabular-nums">
+                      Min next:{' '}
+                      <strong className="font-medium text-white">{formatINR(minNextBid)}</strong>
+                    </span>
                   </div>
                 </div>
 
-                {/* Role-based Bidding Panel */}
+                {/* Role-based Interactive Bidding Form */}
                 {user.role === 'bidder' && !isOwnListing ? (
                   phase === 'live' && !auction.paused ? (
-                    <div className="space-y-4">
+                    <div className="space-y-4 border-t border-white/10 pt-5">
                       <form onSubmit={handlePlaceBid} className="space-y-3.5">
                         <div>
-                          <label
-                            htmlFor="bid-amount-input"
-                            className="mb-1.5 block pl-1 text-xs font-medium text-white/80"
-                          >
-                            Your Bid Amount (₹)
-                          </label>
-                          <input
-                            id="bid-amount-input"
-                            type="number"
-                            min={minNextBid}
-                            step="1"
-                            value={bidAmount}
-                            onChange={(e) => setBidAmount(e.target.value)}
-                            disabled={submitting}
-                            className="h-[46px] w-full rounded-full border border-white/20 bg-white/[0.05] px-4 text-sm font-medium text-white focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/15"
-                          />
-                        </div>
-
-                        {/* Quick Auto-Proxy */}
-                        <div className="rounded-2xl border border-white/15 bg-white/[0.03] p-3.5">
-                          <label className="flex cursor-pointer items-center justify-between gap-2 text-xs">
-                            <span className="flex items-center gap-2 font-medium text-white/85">
-                              <Bot className="h-4 w-4 text-[#d5d7db]" aria-hidden="true" />
-                              Enable Quick Proxy Ceiling
+                          <div className="mb-1.5 flex items-center justify-between text-xs">
+                            <label
+                              htmlFor="bid-amount-input"
+                              className="font-medium text-white/80"
+                            >
+                              Bid Amount
+                            </label>
+                            <span className="text-[11px] tabular-nums text-white/45">
+                              Min {formatINR(minNextBid)} (+{formatINR(auction.min_increment)})
+                            </span>
+                          </div>
+                          <div className="relative">
+                            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-white/45">
+                              ₹
                             </span>
                             <input
-                              type="checkbox"
-                              checked={enableProxy}
-                              onChange={(e) => setEnableProxy(e.target.checked)}
-                              className="h-4 w-4 accent-white"
+                              id="bid-amount-input"
+                              type="number"
+                              min={minNextBid}
+                              step="1"
+                              value={bidAmount}
+                              onChange={(e) => setBidAmount(e.target.value)}
+                              disabled={submitting}
+                              className="h-12 w-full rounded-xl border border-white/15 bg-white/[0.04] pl-8 pr-4 text-base font-medium tabular-nums text-white transition focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/10"
                             />
-                          </label>
-
-                          {enableProxy ? (
-                            <div className="mt-3">
-                              <input
-                                type="number"
-                                min={Number(bidAmount) || minNextBid}
-                                step="1"
-                                value={proxyMaxInput}
-                                onChange={(e) => setProxyMaxInput(e.target.value)}
-                                placeholder="Enter secret max bid ceiling (₹)"
-                                className="h-10 w-full rounded-full border border-white/20 bg-black/35 px-4 text-xs text-white placeholder:text-white/40 focus:border-white/45 focus:outline-none"
-                              />
-                            </div>
-                          ) : myProxyMax ? (
-                            <p className="mt-1.5 text-[11px] text-white/60">
-                              Active hidden proxy ceiling: {formatINR(myProxyMax)}
-                            </p>
-                          ) : null}
+                          </div>
                         </div>
 
                         {errorMessage ? (
                           <div
                             role="alert"
-                            className="rounded-2xl border border-rose-300/25 bg-rose-950/50 px-4 py-2.5 text-center text-xs text-rose-100"
+                            className="rounded-xl border border-rose-400/25 bg-rose-950/40 px-3.5 py-2.5 text-xs text-rose-200"
                           >
                             {errorMessage}
                           </div>
@@ -1103,206 +1383,253 @@ export function AuctionDetailClient({
                         {successMessage ? (
                           <div
                             role="status"
-                            className="rounded-2xl border border-emerald-300/25 bg-emerald-950/50 px-4 py-2.5 text-center text-xs text-emerald-100"
+                            className="rounded-xl border border-emerald-400/25 bg-emerald-950/40 px-3.5 py-2.5 text-xs text-emerald-200"
                           >
                             {successMessage}
                           </div>
                         ) : null}
 
+                        {/* Primary Action: PLACE BID */}
                         <ShinyButton
                           type="submit"
                           disabled={submitting}
                           label={
                             submitting
-                              ? 'Locking Bid...'
-                              : `Place Bid (${formatINR(Number(bidAmount) || minNextBid)})`
+                              ? 'LOCKING BID...'
+                              : `PLACE BID · ${formatINR(Number(bidAmount) || minNextBid)}`
                           }
                           fillColor="#0b0c10"
                           labelColor="#ffffff"
                           accentColor="#a7adb6"
                           accentSoftColor="#e2e4e8"
-                          cornerRadius={9999}
-                          speckleOpacity={0.28}
-                          className="flex h-[46px] w-full items-center justify-center !p-0 !text-sm !font-medium shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                          cornerRadius={12}
+                          speckleOpacity={0.22}
+                          className="flex h-12 w-full items-center justify-center !p-0 !text-xs !font-semibold !tracking-wider shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
                         />
                       </form>
 
-                      {/* AUTOBID AI Section (Part 6) */}
-                      <div className="rounded-2xl border border-white/20 bg-white/[0.04] p-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <Bot className="h-4 w-4 text-emerald-300" aria-hidden="true" />
-                            <span className="text-xs font-semibold text-white">AUTOBID AI</span>
-                          </div>
-                          {myAutoBid ? (
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                  myAutoBid.is_active
-                                    ? 'bg-emerald-950/70 text-emerald-200'
-                                    : 'bg-white/10 text-white/65'
-                                }`}
-                              >
-                                {myAutoBid.is_active ? 'Active' : 'Paused'} · Max{' '}
-                                {formatINR(myAutoBid.max_amount)}
+                      {/* Collapsible Automated Bidding (Proxy Ceiling & AutoBid AI) */}
+                      <div className="border-t border-white/[0.08] pt-3.5">
+                        <button
+                          type="button"
+                          onClick={() => setAutomatedOpen((v) => !v)}
+                          className="flex w-full cursor-pointer items-center justify-between text-xs text-white/65 transition hover:text-white"
+                        >
+                          <span className="flex items-center gap-2 font-medium">
+                            <Bot className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+                            Auto-Proxy &amp; AutoBid AI
+                            {myAutoBid?.is_active || myProxyMax ? (
+                              <span className="rounded-full bg-emerald-950/70 px-2 py-0.5 text-[10px] text-emerald-300">
+                                Active
                               </span>
-                              <button
-                                type="button"
-                                onClick={handleToggleAutoBidPause}
-                                disabled={autoBidLoading}
-                                className="cursor-pointer rounded-full border border-white/20 px-2.5 py-0.5 text-[10px] text-white hover:border-white/40"
-                              >
-                                {myAutoBid.is_active ? 'Pause' : 'Resume'}
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setAutoBidOpen((o) => !o)}
-                              className="cursor-pointer rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[11px] font-medium text-white hover:border-white/45"
-                            >
-                              {autoBidOpen ? 'Close' : 'Configure AutoBid AI'}
-                            </button>
-                          )}
-                        </div>
+                            ) : null}
+                          </span>
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform ${
+                              automatedOpen ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
 
-                        {autoBidOpen ? (
-                          <form onSubmit={handleActivateAutoBid} className="mt-3 space-y-2.5 border-t border-white/10 pt-3">
-                            <input
-                              type="number"
-                              min={minNextBid}
-                              value={autoBidMax}
-                              onChange={(e) => setAutoBidMax(e.target.value)}
-                              placeholder={`Authorized max budget (min ${formatINR(minNextBid)})`}
-                              required
-                              className="h-9 w-full rounded-full border border-white/20 bg-black/40 px-3.5 text-xs text-white"
-                            />
-                            <div className="grid grid-cols-2 gap-2">
-                              <select
-                                value={autoBidStrategy}
-                                onChange={(e) =>
-                                  setAutoBidStrategy(e.target.value as typeof autoBidStrategy)
-                                }
-                                className="h-9 rounded-full border border-white/20 bg-[#0d1016] px-3 text-[11px] text-white"
-                              >
-                                <option value="minimum">Min Increment (+1x)</option>
-                                <option value="step_2x">Aggressive (+2x)</option>
-                                <option value="conservative">Conservative</option>
-                              </select>
-                              <select
-                                value={autoBidStop}
-                                onChange={(e) =>
-                                  setAutoBidStop(e.target.value as typeof autoBidStop)
-                                }
-                                className="h-9 rounded-full border border-white/20 bg-[#0d1016] px-3 text-[11px] text-white"
-                              >
-                                <option value="max_budget">Stop at Max Budget</option>
-                                <option value="max_5_bids">Stop after 5 Bids</option>
-                                <option value="outbid_twice">Stop if Outbid 2x</option>
-                              </select>
+                        {automatedOpen ? (
+                          <div className="mt-3 space-y-3">
+                            {/* Quick Proxy Ceiling */}
+                            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                              <label className="flex cursor-pointer items-center justify-between gap-2 text-xs">
+                                <span className="font-medium text-white/80">
+                                  Quick Proxy Ceiling (with bid)
+                                </span>
+                                <input
+                                  type="checkbox"
+                                  checked={enableProxy}
+                                  onChange={(e) => setEnableProxy(e.target.checked)}
+                                  className="h-4 w-4 accent-white"
+                                />
+                              </label>
+
+                              {enableProxy ? (
+                                <input
+                                  type="number"
+                                  min={Number(bidAmount) || minNextBid}
+                                  step="1"
+                                  value={proxyMaxInput}
+                                  onChange={(e) => setProxyMaxInput(e.target.value)}
+                                  placeholder="Secret max bid ceiling (₹)"
+                                  className="mt-2.5 h-9 w-full rounded-lg border border-white/15 bg-black/40 px-3 text-xs text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                                />
+                              ) : myProxyMax ? (
+                                <p className="mt-1.5 text-[11px] text-white/55">
+                                  Active hidden proxy ceiling: {formatINR(myProxyMax)}
+                                </p>
+                              ) : null}
                             </div>
-                            <label className="flex cursor-pointer items-start gap-2 text-[11px] text-white/75">
-                              <input
-                                type="checkbox"
-                                checked={autoBidConfirmed}
-                                onChange={(e) => setAutoBidConfirmed(e.target.checked)}
-                                className="mt-0.5 accent-emerald-400"
-                              />
-                              <span>
-                                I authorize deterministic server-side AutoBid up to my exact
-                                maximum limit. It will never exceed this cap.
-                              </span>
-                            </label>
-                            <button
-                              type="submit"
-                              disabled={autoBidLoading}
-                              className="smoky-cta-btn h-9 w-full cursor-pointer rounded-full text-xs font-semibold text-white"
-                            >
-                              {autoBidLoading ? 'Activating...' : 'Confirm & Activate AutoBid AI'}
-                            </button>
-                          </form>
+
+                            {/* AUTOBID AI */}
+                            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-white/85">
+                                  AutoBid AI Agent
+                                </span>
+                                {myAutoBid ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[11px] text-emerald-300">
+                                      {myAutoBid.is_active ? 'Active' : 'Paused'} ·{' '}
+                                      {formatINR(myAutoBid.max_amount)}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={handleToggleAutoBidPause}
+                                      disabled={autoBidLoading}
+                                      className="cursor-pointer rounded-md border border-white/15 px-2 py-0.5 text-[10px] text-white hover:border-white/35"
+                                    >
+                                      {myAutoBid.is_active ? 'Pause' : 'Resume'}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAutoBidOpen((o) => !o)}
+                                    className="cursor-pointer rounded-md border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[11px] font-medium text-white hover:border-white/35"
+                                  >
+                                    {autoBidOpen ? 'Close' : 'Configure'}
+                                  </button>
+                                )}
+                              </div>
+
+                              {autoBidOpen ? (
+                                <form
+                                  onSubmit={handleActivateAutoBid}
+                                  className="mt-3 space-y-2.5 border-t border-white/10 pt-3"
+                                >
+                                  <input
+                                    type="number"
+                                    min={minNextBid}
+                                    value={autoBidMax}
+                                    onChange={(e) => setAutoBidMax(e.target.value)}
+                                    placeholder={`Max budget (min ${formatINR(minNextBid)})`}
+                                    required
+                                    className="h-9 w-full rounded-lg border border-white/15 bg-black/40 px-3 text-xs text-white"
+                                  />
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <select
+                                      value={autoBidStrategy}
+                                      onChange={(e) =>
+                                        setAutoBidStrategy(e.target.value as typeof autoBidStrategy)
+                                      }
+                                      className="h-9 rounded-lg border border-white/15 bg-[#0d1016] px-2.5 text-[11px] text-white"
+                                    >
+                                      <option value="minimum">Min Increment (+1x)</option>
+                                      <option value="step_2x">Aggressive (+2x)</option>
+                                      <option value="conservative">Conservative</option>
+                                    </select>
+                                    <select
+                                      value={autoBidStop}
+                                      onChange={(e) =>
+                                        setAutoBidStop(e.target.value as typeof autoBidStop)
+                                      }
+                                      className="h-9 rounded-lg border border-white/15 bg-[#0d1016] px-2.5 text-[11px] text-white"
+                                    >
+                                      <option value="max_budget">Stop at Max Budget</option>
+                                      <option value="max_5_bids">Stop after 5 Bids</option>
+                                      <option value="outbid_twice">Stop if Outbid 2x</option>
+                                    </select>
+                                  </div>
+                                  <label className="flex cursor-pointer items-start gap-2 text-[11px] text-white/70">
+                                    <input
+                                      type="checkbox"
+                                      checked={autoBidConfirmed}
+                                      onChange={(e) => setAutoBidConfirmed(e.target.checked)}
+                                      className="mt-0.5 accent-emerald-400"
+                                    />
+                                    <span>
+                                      Authorize server-side AutoBid up to my exact maximum limit.
+                                    </span>
+                                  </label>
+                                  <button
+                                    type="submit"
+                                    disabled={autoBidLoading}
+                                    className="smoky-cta-btn h-9 w-full cursor-pointer rounded-lg text-xs font-semibold text-white"
+                                  >
+                                    {autoBidLoading ? 'Activating...' : 'Activate AutoBid AI'}
+                                  </button>
+                                </form>
+                              ) : null}
+                            </div>
+                          </div>
                         ) : null}
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-4 rounded-3xl border border-white/20 bg-[#0d0f15]/90 p-5 text-xs text-white/85 shadow-xl backdrop-blur-xl">
-                      <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
-                        <div className="flex items-center gap-2">
-                          <Gavel className="h-4 w-4 text-[#a7adb6]" aria-hidden="true" />
-                          <span className="font-semibold uppercase tracking-wider text-white">
-                            Auction Finalized
-                          </span>
-                        </div>
+                    /* Ended / Paused Final Summary */
+                    <div className="space-y-4 border-t border-white/10 pt-5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-white/80">Settlement Status</span>
                         <span
-                          className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
+                          className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                             !auction.highest_bidder_id
-                              ? 'border-white/20 bg-white/10 text-white/70'
-                              : auction.reserve_price !== null && auction.current_price < auction.reserve_price
-                                ? 'border-amber-400/30 bg-amber-950/60 text-amber-200'
-                                : 'border-emerald-400/30 bg-emerald-950/60 text-emerald-200'
+                              ? 'border-white/15 bg-white/10 text-white/70'
+                              : auction.reserve_price !== null &&
+                                  auction.current_price < auction.reserve_price
+                                ? 'border-amber-400/30 bg-amber-950/50 text-amber-200'
+                                : 'border-emerald-400/30 bg-emerald-950/50 text-emerald-200'
                           }`}
                         >
                           {!auction.highest_bidder_id
-                            ? 'Unsold (No Bids)'
-                            : auction.reserve_price !== null && auction.current_price < auction.reserve_price
+                            ? 'Unsold'
+                            : auction.reserve_price !== null &&
+                                auction.current_price < auction.reserve_price
                               ? 'Reserve Unmet'
                               : 'Sold'}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
                         <div>
-                          <span className="text-white/50">Winning / Final Price</span>
-                          <p className="mt-0.5 text-base font-semibold text-white">
-                            {formatINR(auction.current_price)}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-white/50">Winning Bidder</span>
+                          <span className="text-white/45">Winning Bidder</span>
                           <p className="mt-0.5 font-medium text-white">
                             {auction.highest_bidder_id
                               ? isLeading
                                 ? `You (${maskBidderName(user.displayName)})`
                                 : maskBidderName(auction.highest_bidder_name)
-                              : 'None (Unsold)'}
+                              : 'None'}
                           </p>
                         </div>
                         <div>
-                          <span className="text-white/50">Total Bids</span>
-                          <p className="mt-0.5 font-medium text-white">{auction.bid_count ?? 0} placed</p>
-                        </div>
-                        <div>
-                          <span className="text-white/50">FairClose Extensions</span>
-                          <p className="mt-0.5 font-medium text-white">{auction.extensions_count} applied</p>
+                          <span className="text-white/45">FairClose Extensions</span>
+                          <p className="mt-0.5 font-medium text-white">
+                            {auction.extensions_count} applied
+                          </p>
                         </div>
                       </div>
 
                       {auction.reserve_price !== null ? (
-                        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-[11px] text-white/70">
-                          <span className="font-medium text-white">Reserve Status: </span>
+                        <div className="text-[11px] text-white/65">
+                          Reserve:{' '}
                           {auction.current_price >= auction.reserve_price ? (
-                            <span className="font-semibold text-emerald-300">Reserve Met</span>
+                            <span className="font-medium text-emerald-300">Met</span>
                           ) : (
-                            <span className="font-semibold text-amber-300">
-                              Reserve Not Met ({formatINR(auction.current_price)} vs Reserve {formatINR(auction.reserve_price)})
+                            <span className="font-medium text-amber-300">
+                              Not Met ({formatINR(auction.current_price)} /{' '}
+                              {formatINR(auction.reserve_price)})
                             </span>
                           )}
                         </div>
                       ) : null}
 
-                      {isLeading && (!auction.reserve_price || auction.current_price >= auction.reserve_price) ? (
-                        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-950/40 p-4 text-center">
+                      {isLeading &&
+                      (!auction.reserve_price || auction.current_price >= auction.reserve_price) ? (
+                        <div className="rounded-xl border border-emerald-400/25 bg-emerald-950/30 p-4 text-center">
                           <p className="text-sm font-semibold text-emerald-200">
-                            Congratulations! You won this auction.
+                            Congratulations, you won this auction.
                           </p>
-                          <p className="mt-1 text-xs text-white/70">
-                            Complete your escrow payment and provide delivery instructions.
+                          <p className="mt-1 text-xs text-white/65">
+                            Complete escrow checkout to finalize your order.
                           </p>
                           <button
                             type="button"
                             onClick={handleFinalizeOrder}
                             disabled={actionLoading}
-                            className="smoky-cta-btn mt-3 inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full px-6 text-xs font-semibold text-white"
+                            className="smoky-cta-btn mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-xs font-semibold text-white"
                           >
                             <CheckCircle2 className="h-4 w-4 text-emerald-300" />
                             {actionLoading ? 'Preparing Checkout...' : 'Proceed to Winner Checkout'}
@@ -1312,12 +1639,13 @@ export function AuctionDetailClient({
                     </div>
                   )
                 ) : (
-                  <div className="space-y-3 rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-xs text-white/75">
+                  /* Seller / Admin View Mode */
+                  <div className="space-y-3 border-t border-white/10 pt-5 text-xs text-white/75">
                     <div className="flex items-center gap-2 font-medium text-white">
-                      <Store className="h-4 w-4" aria-hidden="true" />
-                      <span>{isOwnListing ? 'Manage Your Listing' : 'Seller / Admin View Mode'}</span>
+                      <Store className="h-4 w-4 text-white/70" aria-hidden="true" />
+                      <span>{isOwnListing ? 'Listing Management' : 'Read-Only View'}</span>
                     </div>
-                    <p className="text-white/65">
+                    <p className="text-white/60">
                       {isOwnListing
                         ? phase === 'ended' || auction.status === 'ended'
                           ? `Auction Ended · ${
@@ -1327,10 +1655,10 @@ export function AuctionDetailClient({
                             }`
                           : `Views: ${auction.views_count ?? 0}${
                               auction.reserve_price !== null
-                                ? ` • Hidden Reserve: ${formatINR(auction.reserve_price)}`
+                                ? ` · Hidden Reserve: ${formatINR(auction.reserve_price)}`
                                 : ''
                             }`
-                        : 'Accounts other than Bidders view this auction in read-only mode.'}
+                        : 'Sellers and admins view active listings in read-only mode.'}
                     </p>
                     {isOwnListing && phase === 'live' ? (
                       <div className="flex flex-wrap gap-2 pt-1">
@@ -1340,15 +1668,15 @@ export function AuctionDetailClient({
                             handleSellerAction(auction.paused ? 'resume' : 'pause')
                           }
                           disabled={actionLoading}
-                          className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 text-[11px] font-medium text-white hover:border-white/45"
+                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.05] px-3.5 text-xs font-medium text-white transition hover:border-white/35"
                         >
                           {auction.paused ? (
                             <>
-                              <Play className="h-3 w-3" /> Resume
+                              <Play className="h-3.5 w-3.5" /> Resume
                             </>
                           ) : (
                             <>
-                              <Pause className="h-3 w-3" /> Pause
+                              <Pause className="h-3.5 w-3.5" /> Pause
                             </>
                           )}
                         </button>
@@ -1357,7 +1685,7 @@ export function AuctionDetailClient({
                             type="button"
                             onClick={() => handleSellerAction('cancel')}
                             disabled={actionLoading}
-                            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-rose-300/30 bg-rose-950/50 px-3 text-[11px] font-medium text-rose-100"
+                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-950/40 px-3.5 text-xs font-medium text-rose-200 transition hover:border-rose-400/50"
                           >
                             Cancel Listing
                           </button>
@@ -1366,207 +1694,192 @@ export function AuctionDetailClient({
                     ) : null}
                   </div>
                 )}
-
-                {/* TRUECOST Breakdown (Part 11) */}
-                <div className="rounded-2xl border border-white/15 bg-white/[0.03] p-4 text-xs">
-                  <p className="flex items-center gap-1.5 font-semibold text-white">
-                    <Sparkles className="h-3.5 w-3.5 text-[#e2e4e8]" />
-                    TrueCost Estimator (If Winning at {formatINR(trueCost.winningBid)})
-                  </p>
-                  <div className="mt-2.5 space-y-1 text-[11px] text-white/70">
-                    <div className="flex justify-between">
-                      <span>Hammer Bid</span>
-                      <span>{formatINR(trueCost.winningBid)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Platform Escrow Fee (2.5%, cap ₹2,500)</span>
-                      <span>{formatINR(trueCost.platformFee)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Shipping</span>
-                      <span>
-                        {trueCost.shippingCost ? formatINR(trueCost.shippingCost) : 'Free'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>GST (18% on platform fee)</span>
-                      <span>{formatINR(trueCost.taxAmount)}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-white/10 pt-1.5 font-semibold text-white">
-                      <span>Estimated Total Payable</span>
-                      <span>{formatINR(trueCost.totalPayable)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Price Insights (Part 11) */}
-                <div className="rounded-2xl border border-white/15 bg-white/[0.03] p-4 text-xs">
-                  <p className="flex items-center gap-1.5 font-semibold text-white">
-                    <TrendingUp className="h-3.5 w-3.5 text-[#e2e4e8]" />
-                    Price Insights ({auction.category})
-                  </p>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">
-                    <div className="rounded-xl border border-white/10 bg-black/30 p-2">
-                      <span className="text-white/50">Low</span>
-                      <p className="font-semibold text-white">{formatINR(priceInsight.lowEstimate)}</p>
-                    </div>
-                    <div className="rounded-xl border border-white/20 bg-white/[0.06] p-2">
-                      <span className="text-white/60">Median</span>
-                      <p className="font-semibold text-white">{formatINR(priceInsight.medianEstimate)}</p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-black/30 p-2">
-                      <span className="text-white/50">High</span>
-                      <p className="font-semibold text-white">{formatINR(priceInsight.highEstimate)}</p>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-[10px] text-white/50">{priceInsight.basisNote}</p>
-                </div>
               </div>
-            </section>
+            </aside>
+          </div>
 
-            {/* Live Bid History */}
-            <section className="rounded-[28px] border border-white/15 bg-white/[0.035] p-6 backdrop-blur-xl">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <Gavel className="h-4 w-4 text-[#d5d7db]" aria-hidden="true" />
-                  Live Bid History
+          {/* Clean Full-Width Bidding History Table */}
+          <section
+            id="bidding-history"
+            className="mt-12 rounded-2xl border border-white/10 bg-white/[0.02] p-6"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2.5">
+                <Gavel className="h-4 w-4 text-white/70" aria-hidden="true" />
+                <h2 className="text-base font-semibold tracking-tight text-white">
+                  Bidding History
                 </h2>
-                <span className="text-xs text-white/55">
-                  {Math.max(auction.bid_count ?? 0, bids.length)} total
-                </span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" title="Real-time updates active" />
               </div>
+              <span className="text-xs text-white/50">
+                {totalBidsCount} {totalBidsCount === 1 ? 'bid' : 'bids'} · {uniqueBiddersCount}{' '}
+                {uniqueBiddersCount === 1 ? 'participant' : 'participants'}
+              </span>
+            </div>
 
-              {bids.length > 0 ? (
-                <ul className="mt-4 max-h-72 space-y-2.5 overflow-y-auto pr-1">
-                  {bids.map((bid, idx) => (
-                    <li
-                      key={bid.id}
-                      className={`flex items-center justify-between gap-3 rounded-2xl border px-3.5 py-2.5 text-xs ${
-                        idx === 0
-                          ? 'border-white/30 bg-white/[0.08]'
-                          : 'border-white/10 bg-white/[0.025]'
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate font-medium text-white">
-                            {bid.bidder_name}
-                          </span>
-                          {bid.is_auto_proxy ? (
-                            <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] text-white/80">
-                              {bid.bid_source === 'autobid' ? 'AutoBid AI' : 'Auto-Proxy'}
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-0.5 text-[10px] text-white/50">
-                          {mountedNowMs !== null
-                            ? new Date(bid.created_at).toLocaleTimeString()
-                            : `${new Date(bid.created_at).toISOString().slice(11, 19)} UTC`}
-                        </p>
-                      </div>
+            {bids.length > 0 ? (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[480px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/[0.08] text-[11px] font-medium uppercase tracking-wider text-white/45">
+                      <th className="pb-3 pr-4">Bidder</th>
+                      <th className="pb-3 pr-4">Method</th>
+                      <th className="pb-3 pr-4">Time</th>
+                      <th className="pb-3 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.06]">
+                    {bids.map((bid, idx) => {
+                      const isHighest = idx === 0;
+                      return (
+                        <tr
+                          key={bid.id}
+                          className={
+                            isHighest
+                              ? 'bg-emerald-950/20 text-white'
+                              : 'text-white/75 hover:bg-white/[0.02]'
+                          }
+                        >
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-white">{bid.bidder_name}</span>
+                              {isHighest ? (
+                                <span className="rounded-full border border-emerald-400/30 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                  Highest Bid
+                                </span>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 text-white/55">
+                            {bid.is_auto_proxy
+                              ? bid.bid_source === 'autobid'
+                                ? 'AutoBid AI'
+                                : 'Auto-Proxy'
+                              : 'Direct'}
+                          </td>
+                          <td className="py-3 pr-4 tabular-nums text-white/55">
+                            {mountedNowMs !== null
+                              ? new Date(bid.created_at).toLocaleString([], {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                })
+                              : `${new Date(bid.created_at).toISOString().slice(11, 19)} UTC`}
+                          </td>
+                          <td className="py-3 text-right font-semibold tabular-nums text-white">
+                            {formatINR(bid.amount)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="py-8 text-center text-xs text-white/45">
+                No bids placed yet. Be the first to set the opening bid.
+              </p>
+            )}
 
-                      <span className="font-semibold text-white">{formatINR(bid.amount)}</span>
+            {extensions.length > 0 ? (
+              <div className="mt-5 border-t border-white/10 pt-4">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-300">
+                  <History className="h-3.5 w-3.5" />
+                  FairClose Anti-Snipe Extensions
+                </p>
+                <ul className="mt-2 space-y-1 text-[11px] text-white/60">
+                  {extensions.map((ext) => (
+                    <li key={ext.id} className="flex justify-between">
+                      <span>+{ext.extension_seconds}s closing extension triggered</span>
+                      <span className="tabular-nums">
+                        {new Date(ext.new_ends_at).toLocaleTimeString()}
+                      </span>
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p className="mt-4 text-center text-xs text-white/55">
-                  No bids placed yet. Be the first to bid!
-                </p>
-              )}
-
-              {extensions.length > 0 ? (
-                <div className="mt-5 border-t border-white/10 pt-4">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-200">
-                    <History className="h-3.5 w-3.5" />
-                    Anti-Snipe Extension History
-                  </p>
-                  <ul className="mt-2 space-y-1.5 text-[11px] text-white/65">
-                    {extensions.map((ext) => (
-                      <li key={ext.id} className="flex justify-between">
-                        <span>+{ext.extension_seconds}s extension triggered</span>
-                        <span>{new Date(ext.new_ends_at).toLocaleTimeString()}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </section>
-          </div>
-        </div>
-      </main>
-    </div>
-
-    {/* Condition Proof Lightbox */}
-    {lightboxIndex !== null && auction.condition_proof_urls && auction.condition_proof_urls[lightboxIndex] ? (
-      <div
-        className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
-        onClick={() => setLightboxIndex(null)}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Condition Proof Photo Lightbox"
-      >
-        <button
-          type="button"
-          onClick={() => setLightboxIndex(null)}
-          className="absolute right-5 top-5 z-10 rounded-full bg-white/20 p-2 text-white hover:bg-white/40"
-          aria-label="Close photo preview"
-        >
-          <X className="h-6 w-6" />
-        </button>
-
-        {lightboxIndex > 0 ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i));
-            }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2.5 text-white hover:bg-white/40"
-            aria-label="Previous proof photo"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-        ) : null}
-
-        {lightboxIndex < auction.condition_proof_urls.length - 1 ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightboxIndex((i) => (i !== null && i < auction.condition_proof_urls!.length - 1 ? i + 1 : i));
-            }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2.5 text-white hover:bg-white/40"
-            aria-label="Next proof photo"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
-        ) : null}
-
-        <div
-          className="relative max-h-[85vh] max-w-4xl overflow-hidden rounded-2xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={auction.condition_proof_urls[lightboxIndex]}
-            alt={`Condition evidence ${lightboxIndex + 1}`}
-            className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl"
-          />
-          <div className="mt-2 text-center text-xs text-white/70">
-            Condition Proof Photo {lightboxIndex + 1} of {auction.condition_proof_urls.length} &bull; {auction.condition}
-          </div>
-        </div>
+              </div>
+            ) : null}
+          </section>
+        </main>
       </div>
-    ) : null}
 
-    {/* Winning Receipt Modal — shown once per session for the auction winner */}
-    <WinningReceiptModal
-      orderId={receiptOrderId ?? ''}
-      isOpen={receiptOpen && !!receiptOrderId}
-      onClose={() => setReceiptOpen(false)}
-      onProceedToPayment={handleReceiptPayment}
-    />
+      {/* Condition Proof Lightbox */}
+      {lightboxIndex !== null &&
+      auction.condition_proof_urls &&
+      auction.condition_proof_urls[lightboxIndex] ? (
+        <div
+          className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
+          onClick={() => setLightboxIndex(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Condition Proof Photo Lightbox"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxIndex(null)}
+            className="absolute right-5 top-5 z-10 rounded-full bg-white/15 p-2 text-white hover:bg-white/30"
+            aria-label="Close photo preview"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {lightboxIndex > 0 ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i));
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-2.5 text-white hover:bg-white/30"
+              aria-label="Previous proof photo"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          ) : null}
+
+          {lightboxIndex < auction.condition_proof_urls.length - 1 ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((i) =>
+                  i !== null && i < auction.condition_proof_urls!.length - 1 ? i + 1 : i
+                );
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-2.5 text-white hover:bg-white/30"
+              aria-label="Next proof photo"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          ) : null}
+
+          <div
+            className="relative max-h-[85vh] max-w-4xl overflow-hidden rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={auction.condition_proof_urls[lightboxIndex]}
+              alt={`Condition evidence ${lightboxIndex + 1}`}
+              className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl"
+            />
+            <div className="mt-2 text-center text-xs text-white/70">
+              Condition Proof Photo {lightboxIndex + 1} of {auction.condition_proof_urls.length}{' '}
+              &bull; {auction.condition}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Winning Receipt Modal */}
+      <WinningReceiptModal
+        orderId={receiptOrderId ?? ''}
+        isOpen={receiptOpen && !!receiptOrderId}
+        onClose={() => setReceiptOpen(false)}
+        onProceedToPayment={handleReceiptPayment}
+      />
     </>
   );
 }

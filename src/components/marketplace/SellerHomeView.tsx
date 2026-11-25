@@ -230,18 +230,18 @@ export function SellerHomeView({
         )}
 
         {/* Personalized Seller Welcome Section & Single Unified Search */}
-        <section className="smoky-glass-card rounded-[34px] border border-white/20 p-6 sm:p-8">
+        <section className="smoky-glass-card rounded-2xl border border-white/15 p-6 sm:p-8">
           <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-[#e2e4e8]/15 px-3 py-1 text-[11px] font-medium text-white">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-3 py-1 text-[11px] font-medium text-white/90">
                 <Store className="h-3.5 w-3.5 text-[#e2e4e8]" aria-hidden="true" />
                 <span>Seller Studio &bull; Analytics &amp; Listing Control</span>
               </div>
 
-              <h1 className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.025em] text-white sm:text-4xl">
+              <h1 className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
                 Welcome, {user.displayName}
               </h1>
-              <p className="mt-2 text-sm leading-relaxed text-white/70">
+              <p className="mt-2 text-sm leading-relaxed text-white/65">
                 Launch verified auctions with Asset Passport hashing, reserve pricing, real-time
                 bid telemetry, and configurable SnipeShield anti-snipe protection.
               </p>
@@ -255,41 +255,41 @@ export function SellerHomeView({
                 labelColor="#ffffff"
                 accentColor="#a7adb6"
                 accentSoftColor="#e2e4e8"
-                cornerRadius={9999}
-                speckleOpacity={0.28}
-                className="flex h-12 w-full items-center justify-center !p-0 !text-xs !font-semibold !tracking-wider shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                cornerRadius={12}
+                speckleOpacity={0.22}
+                className="flex h-11 w-full items-center justify-center !p-0 !text-xs !font-semibold !tracking-wider shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
               />
             </div>
           </div>
 
           {/* Seller Dashboard KPIs (Part 4) */}
           <div className="relative z-10 mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-white/55">Active</p>
-              <p className="mt-0.5 text-lg font-semibold text-white">{activeCount}</p>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Active</p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{activeCount}</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-white/55">Scheduled</p>
-              <p className="mt-0.5 text-lg font-semibold text-white">{scheduledCount}</p>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Scheduled</p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{scheduledCount}</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-white/55">Completed</p>
-              <p className="mt-0.5 text-lg font-semibold text-white">{completedCount}</p>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Completed</p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{completedCount}</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-white/55">Total Bids</p>
-              <p className="mt-0.5 text-lg font-semibold text-white">{totalBidsOnMine}</p>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Total Bids</p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{totalBidsOnMine}</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-white/55">Total Views</p>
-              <p className="mt-0.5 flex items-center justify-center gap-1 text-lg font-semibold text-white">
-                <Eye className="h-3.5 w-3.5 text-white/60" />
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Total Views</p>
+              <p className="mt-0.5 flex items-center justify-center gap-1 text-lg font-semibold tabular-nums text-white">
+                <Eye className="h-3.5 w-3.5 text-white/55" />
                 {totalViews}
               </p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-white/55">Gross Value</p>
-              <p className="mt-0.5 text-lg font-semibold text-white">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Gross Value</p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">
                 {formatINR(projectedRevenue)}
               </p>
             </div>
@@ -311,13 +311,13 @@ export function SellerHomeView({
 
         {/* Seller Performance Analytics Chart */}
         {chartData.length > 0 ? (
-          <section className="rounded-[28px] border border-white/15 bg-[#0e1015]/90 p-6">
+          <section className="rounded-2xl border border-white/10 bg-[#0d0f14]/90 p-6">
             <div className="mb-4 flex items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-base font-semibold text-white">
                 <BarChart3 className="h-4 w-4 text-[#e2e4e8]" />
                 Listing Performance Analytics
               </h2>
-              <Link href="/orders" className="text-xs text-white/70 underline hover:text-white">
+              <Link href="/orders" className="text-xs text-white/65 underline hover:text-white">
                 Manage Orders &amp; Shipments
               </Link>
             </div>

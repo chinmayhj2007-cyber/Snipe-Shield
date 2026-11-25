@@ -36,10 +36,10 @@ interface BidderHomeViewProps {
 
 function EmptySection({ message }: { message: string }) {
   return (
-    <div className="rounded-[28px] border border-white/15 bg-[#0e1015]/80 px-6 py-10 text-center">
-      <Gavel className="mx-auto h-7 w-7 text-white/40" aria-hidden="true" />
+    <div className="rounded-2xl border border-white/10 bg-[#0d0f14]/80 px-6 py-10 text-center">
+      <Gavel className="mx-auto h-7 w-7 text-white/35" aria-hidden="true" />
       <p className="mt-3 text-sm font-medium text-white/80">{message}</p>
-      <p className="mt-1 text-xs text-white/50">
+      <p className="mt-1 text-xs text-white/45">
         New auctions appear here automatically as sellers publish them.
       </p>
     </div>
@@ -231,37 +231,37 @@ export function BidderHomeView({
         ) : null}
 
         {/* Welcome Hero & Single Unified Instant Search */}
-        <section className="smoky-glass-card rounded-[34px] border border-white/20 p-6 sm:p-8">
+        <section className="smoky-glass-card rounded-2xl border border-white/15 p-6 sm:p-8">
           <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.06] px-3 py-1 text-[11px] font-medium text-white/85">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#d5d7db]" aria-hidden="true" />
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/80">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
                 <span>SnipeShield Anti-Sniping &amp; AutoBid AI Active</span>
               </div>
 
-              <h1 className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.025em] text-white sm:text-4xl">
+              <h1 className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
                 Welcome back, {user.displayName}
               </h1>
-              <p className="mt-2 text-sm leading-relaxed text-white/70">
+              <p className="mt-2 text-sm leading-relaxed text-white/65">
                 Bid across verified drops with SHIELDLOCK transaction protection, transparent
                 TrueCost pricing, and deterministic AutoBid AI.
               </p>
             </div>
 
             <div className="flex shrink-0 items-center gap-3">
-              <div className="rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-center">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-white/55">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-center">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-white/50">
                   Live Drops
                 </p>
-                <p className="mt-0.5 text-lg font-semibold text-white">
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">
                   {liveAuctions.length}
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-center">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-white/55">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-center">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-white/50">
                   Saved
                 </p>
-                <p className="mt-0.5 text-lg font-semibold text-white">{savedSet.size}</p>
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{savedSet.size}</p>
               </div>
             </div>
           </div>

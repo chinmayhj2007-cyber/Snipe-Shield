@@ -53,17 +53,17 @@ export function CompareClient({ user, allAuctions }: CompareClientProps) {
           </div>
           <Link
             href={user.role === 'seller' ? '/seller/home' : '/bidder/home'}
-            className="smoky-cta-btn inline-flex h-10 items-center rounded-full px-5 text-xs font-medium text-white"
+            className="smoky-cta-btn inline-flex h-10 items-center rounded-xl px-5 text-xs font-medium text-white"
           >
             Add More Items
           </Link>
         </div>
 
         {selected.length > 0 ? (
-          <div className="overflow-x-auto rounded-[28px] border border-white/20 bg-[#0d1016]/90 p-5">
+          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0d1016]/90 p-5">
             <table className="w-full min-w-[640px] text-left text-xs">
               <thead>
-                <tr className="border-b border-white/15">
+                <tr className="border-b border-white/10">
                   <th className="py-3 pr-4 text-white/55">Attribute</th>
                   {selected.map((item) => (
                     <th key={item.id} className="px-3 py-3 align-top">

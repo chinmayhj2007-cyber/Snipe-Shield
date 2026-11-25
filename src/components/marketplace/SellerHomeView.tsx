@@ -24,6 +24,7 @@ import {
 import { AuctionCard } from '@/components/marketplace/AuctionCard';
 import { CategoryGrid } from '@/components/marketplace/CategoryGrid';
 import { MarketplaceNavbar } from '@/components/marketplace/MarketplaceNavbar';
+import { SiteFooter } from '@/components/marketplace/SiteFooter';
 import { UnifiedSearchBar } from '@/components/marketplace/UnifiedSearchBar';
 import { ShinyButton } from '@/components/ui/shiny-button';
 import {
@@ -446,7 +447,7 @@ export function SellerHomeView({
         ) : null}
 
         {/* Auction Categories */}
-        <section aria-labelledby="seller-categories-heading" className="space-y-4 pb-6">
+        <section aria-labelledby="seller-categories-heading" className="space-y-4 pb-10">
           <h2 id="seller-categories-heading" className="text-lg font-semibold tracking-tight">
             Auction Categories
           </h2>
@@ -456,6 +457,8 @@ export function SellerHomeView({
           />
         </section>
       </main>
+
+      <SiteFooter sellHref="/seller/create-listing" />
     </div>
   );
 }

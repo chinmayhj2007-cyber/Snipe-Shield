@@ -1,4 +1,4 @@
-# 🛡️ SnipeShield (Snipe-Sheet)
+# 🛡️ SnipeShield (Snipe-Shield)
 
 > **Avishkar'26 Real-Time Online Auction & Bidding Platform**  
 > An enterprise-grade, real-time auction ecosystem engineered to prevent bid-sniping, guarantee fair market discovery, and secure digital escrow transactions.
@@ -82,8 +82,8 @@ graph TD
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/chinmayhj2007-cyber/Snipe-Sheet.git
-cd Snipe-Sheet
+git clone https://github.com/chinmayhj2007-cyber/Snipe-Shield.git
+cd Snipe-Shield
 ```
 
 ### 2. Install Dependencies

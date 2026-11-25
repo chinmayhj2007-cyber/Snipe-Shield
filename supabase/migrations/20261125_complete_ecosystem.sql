@@ -972,3 +972,8 @@ do $$ begin alter publication supabase_realtime add table public.notifications; 
 do $$ begin alter publication supabase_realtime add table public.orders; exception when duplicate_object then null; end $$;
 do $$ begin alter publication supabase_realtime add table public.auto_bids; exception when duplicate_object then null; end $$;
 do $$ begin alter publication supabase_realtime add table public.auction_extensions; exception when duplicate_object then null; end $$;
+
+-- 19. CONDITION PROOF & DEFECT DESCRIPTION COLUMNS
+alter table public.auctions add column if not exists defect_description text;
+alter table public.auctions add column if not exists condition_proof_urls text[] not null default '{}'::text[];
+

@@ -1,11 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { AUCTION_CATEGORIES, AUCTION_CONDITIONS } from '@/lib/marketplace/types';
+import {
+  AUCTION_CATEGORIES,
+  AUCTION_CONDITIONS,
+  requiresConditionProof,
+} from '@/lib/marketplace/types';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 const VALID_CATEGORIES = new Set<string>(AUCTION_CATEGORIES.map((c) => c.id));
 const VALID_CONDITIONS = new Set<string>(AUCTION_CONDITIONS);
 const MAX_PRICE_AMOUNT = 100000000;
 const MAX_IMAGES = 5;
+const MIN_CONDITION_PROOF_IMAGES = 2;
+const MAX_CONDITION_PROOF_IMAGES = 6;
 
 function parseStrictFiniteNumber(value: unknown): number | null {
   if (typeof value === 'number') {
@@ -120,6 +126,9 @@ export async function POST(request: NextRequest) {
   const startsAtRaw = typeof body.startsAt === 'string' ? body.startsAt : '';
   const endsAtRaw = typeof body.endsAt === 'string' ? body.endsAt : '';
   const rawImages = Array.isArray(body.imageUrls) ? body.imageUrls : [];
+  const rawConditionProof = Array.isArray(body.conditionProofUrls) ? body.conditionProofUrls : [];
+  const defectDescription =
+    typeof body.defectDescription === 'string' ? body.defectDescription.trim().slice(0, 2000) : '';
 
   if (title.length < 4 || title.length > 120) {
     return NextResponse.json(
@@ -211,6 +220,30 @@ export async function POST(request: NextRequest) {
     .filter((u): u is string => isValidSellerImageUrl(u, expectedOrigin, user.id))
     .slice(0, MAX_IMAGES);
 
+  const conditionProofUrls = rawConditionProof
+    .filter((u): u is string => isValidSellerImageUrl(u, expectedOrigin, user.id))
+    .slice(0, MAX_CONDITION_PROOF_IMAGES);
+
+  // Validate condition-specific evidence requirements on the backend
+  if (requiresConditionProof(condition)) {
+    if (conditionProofUrls.length < MIN_CONDITION_PROOF_IMAGES) {
+      return NextResponse.json(
+        {
+          error: `Condition "${condition}" requires at least ${MIN_CONDITION_PROOF_IMAGES} damage/condition evidence images (uploaded ${conditionProofUrls.length}).`,
+        },
+        { status: 400 }
+      );
+    }
+    if (!defectDescription || defectDescription.length < 5) {
+      return NextResponse.json(
+        {
+          error: `Please describe the condition/defects in detail (at least 5 characters) for "${condition}".`,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   const { data: created, error: insertError } = await supabase
     .from('auctions')
     .insert({
@@ -219,6 +252,8 @@ export async function POST(request: NextRequest) {
       description,
       category,
       condition,
+      defect_description: defectDescription || null,
+      condition_proof_urls: conditionProofUrls,
       starting_price: Number(startingPrice.toFixed(2)),
       current_price: Number(startingPrice.toFixed(2)),
       min_increment: Number(minIncrement.toFixed(2)),

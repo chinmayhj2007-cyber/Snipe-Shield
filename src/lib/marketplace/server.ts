@@ -21,7 +21,7 @@ import type {
 type ServerSupabase = NonNullable<Awaited<ReturnType<typeof getSupabaseServerClient>>>;
 
 const AUCTION_PUBLIC_COLUMNS =
-  'id, seller_id, title, description, category, condition, image_url, image_urls, starting_price, current_price, min_increment, highest_bidder_id, status, starts_at, ends_at, original_ends_at, extensions_count, anti_snipe_window_sec, anti_snipe_extend_sec, max_extensions, shipping_details, delivery_info, return_policy, shipping_cost, views_count, is_demo, paused, moderation_status, bid_count, created_at';
+  'id, seller_id, title, description, category, condition, defect_description, condition_proof_urls, image_url, image_urls, starting_price, current_price, min_increment, highest_bidder_id, status, starts_at, ends_at, original_ends_at, extensions_count, anti_snipe_window_sec, anti_snipe_extend_sec, max_extensions, shipping_details, delivery_info, return_policy, shipping_cost, views_count, is_demo, paused, moderation_status, bid_count, created_at';
 
 function deriveDisplayName(
   fullName?: string | null,
@@ -184,7 +184,11 @@ function mapRawAuctionRow(
     title: String(row.title),
     description: String(row.description ?? ''),
     category: String(row.category ?? 'Electronics'),
-    condition: String(row.condition ?? 'New'),
+    condition: String(row.condition ?? 'Brand New'),
+    defect_description: row.defect_description ? String(row.defect_description) : null,
+    condition_proof_urls: Array.isArray(row.condition_proof_urls)
+      ? (row.condition_proof_urls as string[])
+      : [],
     image_url: row.image_url ? String(row.image_url) : null,
     image_urls: Array.isArray(row.image_urls) ? (row.image_urls as string[]) : [],
     starting_price: Number(row.starting_price),

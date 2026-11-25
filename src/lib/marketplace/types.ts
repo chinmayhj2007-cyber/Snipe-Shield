@@ -74,14 +74,37 @@ export const AUCTION_CATEGORIES = [
 ] as const;
 
 export const AUCTION_CONDITIONS = [
-  'New',
+  'Brand New',
   'Like New',
-  'Mint',
   'Good',
+  'Fair',
+  'Scratched',
+  'Dented',
+  'Cracked',
+  'Broken',
+  'Not Working',
+  'Partially Working',
+  'Missing Parts',
   'Refurbished',
+  'Repaired',
+  'Water Damaged',
+  'For Parts Only',
+  'Other Defects',
 ] as const;
 
 export type AuctionCondition = (typeof AUCTION_CONDITIONS)[number];
+
+/** Conditions where damage/condition evidence images and defect descriptions are optional */
+export const OPTIONAL_PROOF_CONDITIONS = new Set<string>([
+  'Brand New',
+  'Like New',
+  'Good',
+]);
+
+/** Returns whether the given condition requires mandatory condition proof images & defect description */
+export function requiresConditionProof(condition: string): boolean {
+  return !OPTIONAL_PROOF_CONDITIONS.has(condition);
+}
 
 export type VerificationStatus =
   | 'unverified'
@@ -114,6 +137,8 @@ export interface AuctionItem {
   description: string;
   category: string;
   condition: string;
+  defect_description?: string | null;
+  condition_proof_urls?: string[];
   image_url: string | null;
   image_urls: string[];
   starting_price: number;

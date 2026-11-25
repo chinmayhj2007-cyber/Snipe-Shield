@@ -5,20 +5,27 @@ import {
   BadgeCheck,
   Bookmark,
   Bot,
+  Camera,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
+  Eye,
   FileCheck2,
   Gavel,
   History,
+  Info,
   Lock,
   Pause,
   Play,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Store,
   TrendingUp,
   Trophy,
   Truck,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -108,6 +115,9 @@ export function AuctionDetailClient({
   // Winning Receipt Modal state
   const [receiptOrderId, setReceiptOrderId] = useState<string | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
+
+  // Condition Proof Lightbox state
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setAuction(initialAuction);
@@ -729,7 +739,14 @@ export function AuctionDetailClient({
                 </div>
                 <div>
                   <span className="text-white/50">Condition</span>
-                  <p className="mt-0.5 font-medium text-white">{auction.condition}</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span className="font-semibold text-white">{auction.condition}</span>
+                    {auction.defect_description || (auction.condition_proof_urls && auction.condition_proof_urls.length > 0) ? (
+                      <span className="rounded-full border border-amber-400/40 bg-amber-950/60 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                        Evidence Verified
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div>
                   <span className="text-white/50">Seller</span>
@@ -744,6 +761,57 @@ export function AuctionDetailClient({
                   </Link>
                 </div>
               </div>
+
+              {/* Defect Description Section */}
+              {auction.defect_description ? (
+                <div className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-950/30 p-4 text-xs">
+                  <div className="flex items-center gap-2 text-amber-300 font-semibold mb-1.5">
+                    <ShieldAlert className="h-4 w-4" />
+                    <span>Seller&apos;s Condition &amp; Defect Description</span>
+                  </div>
+                  <p className="whitespace-pre-line text-white/90 leading-relaxed pl-6">
+                    {auction.defect_description}
+                  </p>
+                </div>
+              ) : null}
+
+              {/* Condition Proof Images Gallery */}
+              {auction.condition_proof_urls && auction.condition_proof_urls.length > 0 ? (
+                <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.025] p-4">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-4 w-4 text-amber-300" />
+                      <h3 className="text-xs font-semibold text-white">
+                        Condition Proof ({auction.condition_proof_urls.length} images)
+                      </h3>
+                    </div>
+                    <span className="text-[10px] text-white/50">
+                      Click any photo to enlarge in lightbox
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                    {auction.condition_proof_urls.map((url, idx) => (
+                      <button
+                        key={url}
+                        type="button"
+                        onClick={() => setLightboxIndex(idx)}
+                        className="group relative aspect-square overflow-hidden rounded-xl border border-white/20 bg-black/40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={`Condition proof photo ${idx + 1}`}
+                          className="h-full w-full object-cover transition group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                          <Eye className="h-4 w-4 text-white" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-xs text-white/75">
                 <div className="flex items-start gap-2">
@@ -953,7 +1021,13 @@ export function AuctionDetailClient({
                     ) : null}
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-xs text-white/65">
+                  {/* Condition preview banner before bidding */}
+                  <div className="mt-2.5 flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs">
+                    <span className="text-white/60">Condition:</span>
+                    <span className="font-semibold text-white">{auction.condition}</span>
+                  </div>
+
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-xs text-white/65">
                     <span>Min Increment: {formatINR(auction.min_increment)}</span>
                     <span>Next Min Bid: {formatINR(minNextBid)}</span>
                   </div>
@@ -1422,6 +1496,69 @@ export function AuctionDetailClient({
         </div>
       </main>
     </div>
+
+    {/* Condition Proof Lightbox */}
+    {lightboxIndex !== null && auction.condition_proof_urls && auction.condition_proof_urls[lightboxIndex] ? (
+      <div
+        className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
+        onClick={() => setLightboxIndex(null)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Condition Proof Photo Lightbox"
+      >
+        <button
+          type="button"
+          onClick={() => setLightboxIndex(null)}
+          className="absolute right-5 top-5 z-10 rounded-full bg-white/20 p-2 text-white hover:bg-white/40"
+          aria-label="Close photo preview"
+        >
+          <X className="h-6 w-6" />
+        </button>
+
+        {lightboxIndex > 0 ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i));
+            }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2.5 text-white hover:bg-white/40"
+            aria-label="Previous proof photo"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        ) : null}
+
+        {lightboxIndex < auction.condition_proof_urls.length - 1 ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxIndex((i) => (i !== null && i < auction.condition_proof_urls!.length - 1 ? i + 1 : i));
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2.5 text-white hover:bg-white/40"
+            aria-label="Next proof photo"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        ) : null}
+
+        <div
+          className="relative max-h-[85vh] max-w-4xl overflow-hidden rounded-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={auction.condition_proof_urls[lightboxIndex]}
+            alt={`Condition evidence ${lightboxIndex + 1}`}
+            className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl"
+          />
+          <div className="mt-2 text-center text-xs text-white/70">
+            Condition Proof Photo {lightboxIndex + 1} of {auction.condition_proof_urls.length} &bull; {auction.condition}
+          </div>
+        </div>
+      </div>
+    ) : null}
 
     {/* Winning Receipt Modal — shown once per session for the auction winner */}
     <WinningReceiptModal

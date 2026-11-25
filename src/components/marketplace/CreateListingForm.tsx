@@ -2,9 +2,13 @@
 
 import {
   ArrowLeft,
+  AlertTriangle,
+  Camera,
   Eye,
   ImagePlus,
+  Info,
   Loader2,
+  ShieldAlert,
   ShieldCheck,
   Trash2,
 } from 'lucide-react';
@@ -17,6 +21,7 @@ import { ShinyButton } from '@/components/ui/shiny-button';
 import {
   AUCTION_CATEGORIES,
   AUCTION_CONDITIONS,
+  requiresConditionProof,
   type AuctionItem,
   type MarketplaceUser,
 } from '@/lib/marketplace/types';
@@ -41,12 +46,16 @@ function safeIsoString(value: string, fallbackIso: string): string {
 export function CreateListingForm({ user }: CreateListingFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const proofFileInputRef = useRef<HTMLInputElement | null>(null);
   const publishInFlightRef = useRef(false);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<string>(AUCTION_CATEGORIES[0].id);
   const [condition, setCondition] = useState<string>(AUCTION_CONDITIONS[0]);
+  const [defectDescription, setDefectDescription] = useState('');
+  const [conditionProofUrls, setConditionProofUrls] = useState<string[]>([]);
+  const [uploadingProofImages, setUploadingProofImages] = useState(false);
   const [startingPrice, setStartingPrice] = useState('5000');
   const [minIncrement, setMinIncrement] = useState('250');
   const [reservePrice, setReservePrice] = useState('');
@@ -124,9 +133,91 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
     setImageUrls((prev) => prev.filter((u) => u !== urlToRemove));
   }
 
+  async function handleProofImageSelection(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    if (conditionProofUrls.length + files.length > 6) {
+      setErrorMessage('You can upload up to 6 condition evidence images.');
+      return;
+    }
+
+    setErrorMessage(null);
+    setUploadingProofImages(true);
+
+    try {
+      const uploaded: string[] = [];
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/seller/upload-image', {
+          method: 'POST',
+          body: fd,
+        });
+        const data = (await res.json()) as { url?: string; error?: string };
+        if (!res.ok || !data.url) {
+          setErrorMessage(data.error ?? 'Failed to upload one of the evidence images.');
+          break;
+        }
+        uploaded.push(data.url);
+      }
+
+      if (uploaded.length > 0) {
+        setConditionProofUrls((prev) => [...prev, ...uploaded]);
+      }
+    } catch {
+      setErrorMessage('Network error while uploading condition proof image.');
+    } finally {
+      setUploadingProofImages(false);
+      if (proofFileInputRef.current) {
+        proofFileInputRef.current.value = '';
+      }
+    }
+  }
+
+  function removeProofImage(urlToRemove: string) {
+    setConditionProofUrls((prev) => prev.filter((u) => u !== urlToRemove));
+  }
+
+  function replaceProofImage(index: number) {
+    // Prompt user to select replacement
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      setUploadingProofImages(true);
+      setErrorMessage(null);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/seller/upload-image', {
+          method: 'POST',
+          body: fd,
+        });
+        const data = (await res.json()) as { url?: string; error?: string };
+        if (!res.ok || !data.url) {
+          setErrorMessage(data.error ?? 'Failed to upload replacement image.');
+          return;
+        }
+        setConditionProofUrls((prev) => {
+          const next = [...prev];
+          next[index] = data.url!;
+          return next;
+        });
+      } catch {
+        setErrorMessage('Network error while replacing proof image.');
+      } finally {
+        setUploadingProofImages(false);
+      }
+    };
+    input.click();
+  }
+
   async function handlePublish(e?: FormEvent) {
     e?.preventDefault();
-    if (publishInFlightRef.current || publishing || uploadingImages) return;
+    if (publishInFlightRef.current || publishing || uploadingImages || uploadingProofImages) return;
     setErrorMessage(null);
 
     const startNum = Number(startingPrice);
@@ -141,6 +232,28 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
     if (description.trim().length < 15) {
       setErrorMessage('Please write a detailed description (at least 15 characters).');
       return;
+    }
+
+    // Condition evidence & defect description validation
+    if (requiresConditionProof(condition)) {
+      if (conditionProofUrls.length < 2) {
+        setErrorMessage(
+          `Condition "${condition}" requires at least 2 damage/condition evidence images. You currently have ${conditionProofUrls.length}.`
+        );
+        return;
+      }
+      if (conditionProofUrls.length > 6) {
+        setErrorMessage(
+          `Condition "${condition}" allows a maximum of 6 damage/condition evidence images.`
+        );
+        return;
+      }
+      if (!defectDescription.trim() || defectDescription.trim().length < 5) {
+        setErrorMessage(
+          'Please describe the product condition and explain any scratches, dents, broken components, or missing accessories (at least 5 characters).'
+        );
+        return;
+      }
     }
     if (!Number.isFinite(startNum) || startNum < 1) {
       setErrorMessage('Starting bid price must be at least ₹1.');
@@ -182,6 +295,8 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
           description: description.trim(),
           category,
           condition,
+          defectDescription: defectDescription.trim() || undefined,
+          conditionProofUrls: conditionProofUrls,
           startingPrice: startNum,
           minIncrement: incNum,
           reservePrice: resNum,
@@ -414,9 +529,16 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
                 <div>
                   <label
                     htmlFor="listing-condition"
-                    className="mb-1.5 block pl-1 text-xs font-medium text-white/80"
+                    className="mb-1.5 flex items-center justify-between pl-1 text-xs font-medium text-white/80"
                   >
-                    Item Condition
+                    <span>Item Condition</span>
+                    {requiresConditionProof(condition) ? (
+                      <span className="text-[10px] font-semibold text-amber-300">
+                        Evidence Photos Required (2-6)
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-white/50">Photos Optional</span>
+                    )}
                   </label>
                   <select
                     id="listing-condition"
@@ -432,6 +554,122 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
                   </select>
                 </div>
               </div>
+
+              {/* Conditional Damage & Condition Evidence Upload + Defect Description */}
+              {requiresConditionProof(condition) ? (
+                <div className="space-y-4 rounded-3xl border border-amber-400/25 bg-amber-950/20 p-5 backdrop-blur-md">
+                  <div className="flex items-start gap-2.5">
+                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">
+                        Condition &amp; Damage Evidence Required
+                      </h3>
+                      <p className="mt-0.5 text-xs text-amber-200/80">
+                        Because you selected <strong className="text-amber-200">&ldquo;{condition}&rdquo;</strong>, SnipeShield buyer-protection requires mandatory visual proof and a defect description before bidders can participate.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Mandatory Defect Description Field */}
+                  <div>
+                    <label
+                      htmlFor="defect-description"
+                      className="mb-1.5 flex items-center justify-between pl-1 text-xs font-semibold text-white/90"
+                    >
+                      <span>Describe the Product Condition &bull; <span className="text-amber-300 font-normal">Mandatory</span></span>
+                      <span className="text-[11px] font-normal text-white/50">
+                        {defectDescription.length}/2000
+                      </span>
+                    </label>
+                    <textarea
+                      id="defect-description"
+                      value={defectDescription}
+                      onChange={(e) => setDefectDescription(e.target.value)}
+                      rows={3}
+                      maxLength={2000}
+                      required
+                      placeholder="Explain the scratches, dents, broken components, missing accessories, or other defects in detail..."
+                      className="w-full rounded-2xl border border-amber-300/30 bg-black/40 p-3.5 text-xs text-white placeholder:text-white/40 focus:border-amber-400/60 focus:bg-black/60 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Condition Proof Images Upload (2 to 6 images) */}
+                  <div>
+                    <div className="mb-2 flex items-center justify-between pl-1">
+                      <label className="text-xs font-semibold text-white/90">
+                        Condition Proof Images ({conditionProofUrls.length}/6 uploaded)
+                      </label>
+                      <span className={`text-[11px] font-medium ${conditionProofUrls.length >= 2 ? 'text-emerald-300' : 'text-amber-300'}`}>
+                        {conditionProofUrls.length >= 2 ? '✓ Minimum requirement met' : `Need at least ${2 - conditionProofUrls.length} more image${2 - conditionProofUrls.length === 1 ? '' : 's'}`}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
+                      {conditionProofUrls.map((url, idx) => (
+                        <div
+                          key={url}
+                          className="group relative aspect-square overflow-hidden rounded-xl border border-white/20 bg-black/40"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={url}
+                            alt={`Condition proof ${idx + 1}`}
+                            className="h-full w-full object-cover transition group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/60 opacity-0 transition group-hover:opacity-100">
+                            <button
+                              type="button"
+                              onClick={() => replaceProofImage(idx)}
+                              disabled={uploadingProofImages || publishing}
+                              title="Replace photo"
+                              className="rounded-full bg-white/20 p-1.5 text-white hover:bg-white/40"
+                            >
+                              <Camera className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeProofImage(url)}
+                              disabled={uploadingProofImages || publishing}
+                              title="Remove photo"
+                              className="rounded-full bg-rose-600/80 p-1.5 text-white hover:bg-rose-600"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {conditionProofUrls.length < 6 ? (
+                        <button
+                          type="button"
+                          disabled={uploadingProofImages || publishing}
+                          onClick={() => proofFileInputRef.current?.click()}
+                          className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-amber-400/40 bg-amber-950/20 text-center text-[10px] text-amber-200 transition hover:border-amber-400 hover:bg-amber-950/40 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {uploadingProofImages ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                          ) : (
+                            <ImagePlus className="h-4 w-4 text-amber-300" />
+                          )}
+                          <span>{uploadingProofImages ? 'Uploading...' : '+ Add Proof'}</span>
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <input
+                      ref={proofFileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={handleProofImageSelection}
+                      className="hidden"
+                    />
+                    <p className="mt-2 text-[10px] text-white/50">
+                      JPG, PNG, or WEBP (up to 5MB each). Min 2, max 6 proof images required.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Pricing */}
               <div className="grid gap-4 sm:grid-cols-4">

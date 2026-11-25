@@ -336,7 +336,7 @@ export function ProfileClient({
                     {user.role.toUpperCase()}
                   </span>
                   {user.verificationStatus === 'verified' ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/35 bg-emerald-950/60 px-2.5 py-0.5 text-[11px] text-emerald-200">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/[0.06] px-2.5 py-0.5 text-[11px] text-white/85">
                       <BadgeCheck className="h-3 w-3" /> Verified
                     </span>
                   ) : null}
@@ -401,7 +401,7 @@ export function ProfileClient({
           </div>
         ) : null}
         {statusMessage ? (
-          <div className="rounded-2xl border border-emerald-300/25 bg-emerald-950/50 px-4 py-2.5 text-center text-xs text-emerald-100">
+          <div className="rounded-2xl border border-white/25 bg-white/[0.06] px-4 py-2.5 text-center text-xs text-white/85">
             {statusMessage}
           </div>
         ) : null}
@@ -465,7 +465,7 @@ export function ProfileClient({
                   type="checkbox"
                   checked={personalizationEnabled}
                   onChange={handleTogglePersonalization}
-                  className="h-4 w-4 accent-emerald-400"
+                  className="h-4 w-4 accent-white"
                 />
               </div>
               <button

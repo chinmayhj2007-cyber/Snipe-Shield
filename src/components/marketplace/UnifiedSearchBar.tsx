@@ -294,9 +294,9 @@ export const UnifiedSearchBar = memo(function UnifiedSearchBar({
               type="checkbox"
               checked={verifiedOnly}
               onChange={(e) => setVerifiedOnly(e.target.checked)}
-              className="h-3.5 w-3.5 accent-emerald-400"
+              className="h-3.5 w-3.5 accent-white"
             />
-            <BadgeCheck className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+            <BadgeCheck className="h-3.5 w-3.5 text-white/85" aria-hidden="true" />
             <span>Verified Sellers Only</span>
           </label>
         </div>

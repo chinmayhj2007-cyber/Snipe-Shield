@@ -110,7 +110,7 @@ export function AdminDashboardClient({ user, data }: AdminDashboardClientProps) 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/35 bg-amber-950/50 px-3 py-1 text-[11px] font-semibold text-amber-200">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold text-white/80">
               <Shield className="h-3.5 w-3.5" />
               Protected Administrator Command Center
             </div>
@@ -147,7 +147,7 @@ export function AdminDashboardClient({ user, data }: AdminDashboardClientProps) 
         </div>
 
         {msg ? (
-          <div className="rounded-2xl border border-emerald-300/30 bg-emerald-950/50 px-4 py-2.5 text-xs text-emerald-100">
+          <div className="rounded-2xl border border-white/25 bg-white/[0.06] px-4 py-2.5 text-xs text-white/85">
             {msg}
           </div>
         ) : null}
@@ -257,7 +257,7 @@ export function AdminDashboardClient({ user, data }: AdminDashboardClientProps) 
                           'Seller marked Verified.'
                         )
                       }
-                      className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full border border-emerald-300/35 bg-emerald-950/60 px-3 font-medium text-emerald-100"
+                      className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full border border-white/25 bg-white/[0.06] px-3 font-medium text-white/85"
                     >
                       <BadgeCheck className="h-3.5 w-3.5" /> Approve
                     </button>
@@ -298,7 +298,7 @@ export function AdminDashboardClient({ user, data }: AdminDashboardClientProps) 
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-2 font-semibold text-white">
-                      <AlertOctagon className="h-4 w-4 text-amber-300" />
+                      <AlertOctagon className="h-4 w-4 text-white/80" />
                       {f.signal_type} &bull; Risk Score {f.risk_score}/100 ({f.severity})
                     </span>
                     <span className="rounded-full border border-white/20 px-2.5 py-0.5 text-[10px] uppercase">
@@ -392,7 +392,7 @@ export function AdminDashboardClient({ user, data }: AdminDashboardClientProps) 
                           'Dispute resolved with refund.'
                         )
                       }
-                      className="h-8 cursor-pointer rounded-full border border-emerald-300/35 bg-emerald-950/60 px-3 text-emerald-100"
+                      className="h-8 cursor-pointer rounded-full border border-white/25 bg-white/[0.06] px-3 text-white/85"
                     >
                       <CheckCircle2 className="mr-1 inline h-3 w-3" /> Refund Buyer
                     </button>
@@ -456,7 +456,7 @@ export function AdminDashboardClient({ user, data }: AdminDashboardClientProps) 
                           'Auction flagged.'
                         )
                       }
-                      className="h-7 cursor-pointer rounded-full border border-amber-300/35 px-2.5 text-[11px] text-amber-200"
+                      className="h-7 cursor-pointer rounded-full border border-white/20 px-2.5 text-[11px] text-white/80"
                     >
                       Flag
                     </button>

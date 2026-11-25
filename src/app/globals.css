@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+:root {
+  --ss-bg-canvas: #090b0f;
+  --ss-bg-surface: #0d0f14;
+  --ss-bg-elevated: #14171f;
+  --ss-border-subtle: rgba(255, 255, 255, 0.1);
+  --ss-border-hover: rgba(255, 255, 255, 0.24);
+  --ss-text-primary: #ffffff;
+  --ss-text-secondary: rgba(255, 255, 255, 0.72);
+  --ss-text-muted: rgba(255, 255, 255, 0.48);
+  --ss-accent-silver: #e2e4e8;
+}
+
 @layer base {
   html,
   body {

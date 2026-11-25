@@ -15,16 +15,16 @@ const LEVEL_STYLES: Record<
     textClass: 'text-rose-300',
   },
   Medium: {
-    barClass: 'bg-amber-400/90',
-    textClass: 'text-amber-300',
+    barClass: 'bg-white/10',
+    textClass: 'text-white/80',
   },
   Strong: {
-    barClass: 'bg-sky-400/90',
-    textClass: 'text-sky-300',
+    barClass: 'bg-white/[0.06]',
+    textClass: 'text-white/80',
   },
   'Very Strong': {
-    barClass: 'bg-emerald-400/95',
-    textClass: 'text-emerald-300',
+    barClass: 'bg-white/15',
+    textClass: 'text-white/85',
   },
 };
 
@@ -63,7 +63,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
           {result.suggestions.slice(0, 2).join(' · ')}
         </p>
       ) : (
-        <p className="text-[11px] leading-snug text-emerald-200/80">
+        <p className="text-[11px] leading-snug text-white/85/80">
           Meets all length, case, number, and symbol requirements.
         </p>
       )}

@@ -77,7 +77,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           {noticeMessage ? (
             <div
               role="status"
-              className="rounded-2xl border border-emerald-300/25 bg-emerald-950/45 px-4 py-2.5 text-center text-xs text-emerald-100 backdrop-blur-md"
+              className="rounded-2xl border border-white/25 bg-white/[0.06] px-4 py-2.5 text-center text-xs text-white/85 backdrop-blur-md"
             >
               {noticeMessage}
             </div>
@@ -128,7 +128,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <span
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold ${
                   isAdmin
-                    ? 'border-amber-300/40 bg-amber-950/60 text-amber-200'
+                    ? 'border-white/20 bg-white/[0.05] text-white/80'
                     : isSeller
                       ? 'border-white/40 bg-[#e2e4e8] text-neutral-950 shadow-sm'
                       : 'border-white/25 bg-white/15 text-white'

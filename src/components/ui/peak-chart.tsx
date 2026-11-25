@@ -14,24 +14,24 @@ const RN = CR / CW
 const BX = 0.32 * CW
 const BY = 0.16 * CW
 
-const FIELD_FILL = "#1678ff"
+const FIELD_FILL = "#3f4654"
 const FIELD_SHADES = [
   { shape: [0.4748, 0.8152, 0.7509, 0.8801, 0.7026], color: "#000000", opacity: 1.0000 },
-  { shape: [0.3741, 0.2723, 0.7371, 0.3009, 0.1168], color: "#020000", opacity: 1.0000 },
-  { shape: [0.7846, 0.0251, 0.3833, 0.1301, -0.5566], color: "#2e85ff", opacity: 0.4756 },
-  { shape: [0.6206, -0.2018, 0.1282, 0.5909, 0.2754], color: "#3584ff", opacity: 0.3146 },
-  { shape: [0.6000, 1.2391, 0.8270, 0.2111, -1.6357], color: "#000d1e", opacity: 1.0000 },
-  { shape: [0.0964, 0.5388, 1000.0000, 0.1285, 0.5421], color: "#000005", opacity: 0.2298 },
+  { shape: [0.3741, 0.2723, 0.7371, 0.3009, 0.1168], color: "#050608", opacity: 1.0000 },
+  { shape: [0.7846, 0.0251, 0.3833, 0.1301, -0.5566], color: "#8e96a4", opacity: 0.3800 },
+  { shape: [0.6206, -0.2018, 0.1282, 0.5909, 0.2754], color: "#a7adb6", opacity: 0.2600 },
+  { shape: [0.6000, 1.2391, 0.8270, 0.2111, -1.6357], color: "#090b0f", opacity: 1.0000 },
+  { shape: [0.0964, 0.5388, 1000.0000, 0.1285, 0.5421], color: "#050608", opacity: 0.2298 },
 ]
 const FIELD_RIMS = [
-  { shape: [0.1207, -0.0365, 0.0492], color: "#2667ff", opacity: 1.0000 },
-  { shape: [0.0667, -0.0166, 0.0176], color: "#467dff", opacity: 1.0000 },
-  { shape: [0.0370, -0.0134, 0.0154], color: "#c2ffff", opacity: 0.8091 },
+  { shape: [0.1207, -0.0365, 0.0492], color: "#6b7280", opacity: 0.8500 },
+  { shape: [0.0667, -0.0166, 0.0176], color: "#9ca3af", opacity: 0.9000 },
+  { shape: [0.0370, -0.0134, 0.0154], color: "#f3f4f6", opacity: 0.7500 },
 ]
-const HALO = { cx: 0.4996, cy: 0.6438, sx: 0.2498, sy: 0.2433, opacity: 0.845, color: "#0e50ff" }
-const BREATH_GAIN = 0.42
+const HALO = { cx: 0.4996, cy: 0.6438, sx: 0.2498, sy: 0.2433, opacity: 0.45, color: "#9ca3af" }
+const BREATH_GAIN = 0.35
 const GRAIN = 1.7
-const BACKDROP = "#08101a"
+const BACKDROP = "#090b0f"
 
 /* Plot frame and marks. */
 const PLOT_X0 = 20.29
@@ -39,7 +39,7 @@ const PLOT_X1 = 503.69
 const PLOT_TOP = 158.49
 const PLOT_BOTTOM = 385.28
 const LINE_W = 7.1
-const LINE_COLOR = "#6496e2"
+const LINE_COLOR = "#d4d8e0"
 const LINE_FALLOFF = 108
 const LINE_POWER = 1.44
 const LINE_CENTER = 12
@@ -49,8 +49,8 @@ const DOT_DY = 2.6
 const GRID_DX = 40.64
 const GRID_DY = 40.07
 const GRID_Y0 = 468.7
-const GRID_COLOR = "#5a87e1"
-const GRID_ALPHA = 0.23
+const GRID_COLOR = "#9ca3af"
+const GRID_ALPHA = 0.18
 
 /* Timeline (seconds). */
 const T_GRID = 0.9
@@ -63,12 +63,12 @@ const T_REST = 3.3
 const T_BREATH = 4.6
 const T_MORPH = 0.75
 
-const BASE_ACCENT = "#4f8ef7"
-const DOT_TOP = "#2680ff"
-const DOT_MID = "#75aafa"
-const DOT_BOTTOM = "#d0e4fd"
-const DOT_GLOW = "#287dff"
-const PULSE_COLOR = "#78afff"
+const BASE_ACCENT = "#cbd2de"
+const DOT_TOP = "#ffffff"
+const DOT_MID = "#d4d8e0"
+const DOT_BOTTOM = "#9ca3af"
+const DOT_GLOW = "#e2e4e8"
+const PULSE_COLOR = "#ffffff"
 
 const MONTH_DATA = [60, 75, 91, 110, 120, 122, 116, 106, 96, 89, 88, 95, 112, 150, 339, 384, 400, 388, 318, 240, 182, 146, 126, 117, 115, 117, 121, 127, 134, 143]
 const SERIES: Record<string, { data: number[]; labels: string[] }> = {
@@ -773,7 +773,7 @@ export function PeakChart({
 
   const px = (n: number) => `${(n * u).toFixed(3)}px`
   const textBase: React.CSSProperties = { position: "absolute", whiteSpace: "nowrap", fontFamily: font, fontStretch: "110%", fontWeight: 300, margin: 0, lineHeight: 1 }
-  const trendColor = trend === "down" ? "#f08a8a" : "#93cfa2"
+  const trendColor = trend === "down" ? "#9ca3af" : "#e5e7eb"
   const finalDigits = value.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
 
   const cardEl = (

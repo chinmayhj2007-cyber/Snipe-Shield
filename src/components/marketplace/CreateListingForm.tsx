@@ -533,7 +533,7 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
                   >
                     <span>Item Condition</span>
                     {requiresConditionProof(condition) ? (
-                      <span className="text-[10px] font-semibold text-amber-300">
+                      <span className="text-[10px] font-semibold text-white/80">
                         Evidence Photos Required (2-6)
                       </span>
                     ) : (
@@ -557,15 +557,15 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
 
               {/* Conditional Damage & Condition Evidence Upload + Defect Description */}
               {requiresConditionProof(condition) ? (
-                <div className="space-y-4 rounded-3xl border border-amber-400/25 bg-amber-950/20 p-5 backdrop-blur-md">
+                <div className="space-y-4 rounded-3xl border border-white/20 bg-white/[0.05] p-5 backdrop-blur-md">
                   <div className="flex items-start gap-2.5">
-                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-white/80" />
                     <div>
                       <h3 className="text-sm font-semibold text-white">
                         Condition &amp; Damage Evidence Required
                       </h3>
-                      <p className="mt-0.5 text-xs text-amber-200/80">
-                        Because you selected <strong className="text-amber-200">&ldquo;{condition}&rdquo;</strong>, SnipeShield buyer-protection requires mandatory visual proof and a defect description before bidders can participate.
+                      <p className="mt-0.5 text-xs text-white/80/80">
+                        Because you selected <strong className="text-white/80">&ldquo;{condition}&rdquo;</strong>, SnipeShield buyer-protection requires mandatory visual proof and a defect description before bidders can participate.
                       </p>
                     </div>
                   </div>
@@ -576,7 +576,7 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
                       htmlFor="defect-description"
                       className="mb-1.5 flex items-center justify-between pl-1 text-xs font-semibold text-white/90"
                     >
-                      <span>Describe the Product Condition &bull; <span className="text-amber-300 font-normal">Mandatory</span></span>
+                      <span>Describe the Product Condition &bull; <span className="text-white/80 font-normal">Mandatory</span></span>
                       <span className="text-[11px] font-normal text-white/50">
                         {defectDescription.length}/2000
                       </span>
@@ -589,7 +589,7 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
                       maxLength={2000}
                       required
                       placeholder="Explain the scratches, dents, broken components, missing accessories, or other defects in detail..."
-                      className="w-full rounded-2xl border border-amber-300/30 bg-black/40 p-3.5 text-xs text-white placeholder:text-white/40 focus:border-amber-400/60 focus:bg-black/60 focus:outline-none"
+                      className="w-full rounded-2xl border border-white/20 bg-black/40 p-3.5 text-xs text-white placeholder:text-white/40 focus:border-white/20 focus:bg-black/60 focus:outline-none"
                     />
                   </div>
 
@@ -599,8 +599,8 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
                       <label className="text-xs font-semibold text-white/90">
                         Condition Proof Images ({conditionProofUrls.length}/6 uploaded)
                       </label>
-                      <span className={`text-[11px] font-medium ${conditionProofUrls.length >= 2 ? 'text-emerald-300' : 'text-amber-300'}`}>
-                        {conditionProofUrls.length >= 2 ? '✓ Minimum requirement met' : `Need at least ${2 - conditionProofUrls.length} more image${2 - conditionProofUrls.length === 1 ? '' : 's'}`}
+                      <span className={`text-[11px] font-medium ${conditionProofUrls.length >= 2 ? 'text-white/90' : 'text-white/65'}`}>
+                        {conditionProofUrls.length >= 2 ? 'Minimum requirement met' : `Need at least ${2 - conditionProofUrls.length} more image${2 - conditionProofUrls.length === 1 ? '' : 's'}`}
                       </span>
                     </div>
 
@@ -644,12 +644,12 @@ export function CreateListingForm({ user }: CreateListingFormProps) {
                           type="button"
                           disabled={uploadingProofImages || publishing}
                           onClick={() => proofFileInputRef.current?.click()}
-                          className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-amber-400/40 bg-amber-950/20 text-center text-[10px] text-amber-200 transition hover:border-amber-400 hover:bg-amber-950/40 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/20 bg-white/[0.05] text-center text-[10px] text-white/80 transition hover:border-white/20 hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {uploadingProofImages ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                            <Loader2 className="h-4 w-4 animate-spin text-white/80" />
                           ) : (
-                            <ImagePlus className="h-4 w-4 text-amber-300" />
+                            <ImagePlus className="h-4 w-4 text-white/80" />
                           )}
                           <span>{uploadingProofImages ? 'Uploading...' : '+ Add Proof'}</span>
                         </button>

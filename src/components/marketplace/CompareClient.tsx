@@ -101,7 +101,7 @@ export function CompareClient({ user, allAuctions }: CompareClientProps) {
                   {selected.map((item) => {
                     const tc = calculateTrueCost(item.current_price, item.shipping_cost ?? 0);
                     return (
-                      <td key={item.id} className="px-3 py-3 font-semibold text-emerald-200">
+                      <td key={item.id} className="px-3 py-3 font-semibold text-white/85">
                         {formatINR(tc.totalPayable)}
                       </td>
                     );
@@ -120,7 +120,7 @@ export function CompareClient({ user, allAuctions }: CompareClientProps) {
                       <span className="inline-flex items-center gap-1">
                         {item.seller_name}
                         {item.seller_verified ? (
-                          <BadgeCheck className="h-3.5 w-3.5 text-emerald-300" />
+                          <BadgeCheck className="h-3.5 w-3.5 text-white/85" />
                         ) : null}
                       </span>
                       <span className="block text-[11px] text-white/55">

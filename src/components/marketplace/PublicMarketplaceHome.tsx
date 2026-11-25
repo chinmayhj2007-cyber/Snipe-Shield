@@ -367,7 +367,7 @@ export function PublicMarketplaceHome({
               className="space-y-6"
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1.5 text-[11px] font-medium tracking-wide text-white/85">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+                <ShieldCheck className="h-3.5 w-3.5 text-white/85" aria-hidden="true" />
                 <span>SHIELDLOCK &amp; FAIRCLOSE ANTI-SNIPING</span>
               </div>
 
@@ -425,7 +425,7 @@ export function PublicMarketplaceHome({
                 <div className="h-7 w-px bg-white/10" />
                 <div>
                   <span className="flex items-center gap-1.5 text-sm font-medium text-white">
-                    <Lock className="h-3.5 w-3.5 text-emerald-400" />
+                    <Lock className="h-3.5 w-3.5 text-white/85" />
                     Escrow Backed
                   </span>
                   <span>SHA-256 Asset Passports</span>
@@ -476,8 +476,8 @@ export function PublicMarketplaceHome({
                       )}
 
                       <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-950/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-200 backdrop-blur-md">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                        <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
                           Featured Live Lot
                         </span>
                         <span className="rounded-full border border-white/15 bg-black/75 px-2.5 py-1 text-[10px] font-medium text-white/85 backdrop-blur-md">
@@ -572,7 +572,7 @@ export function PublicMarketplaceHome({
                                   <span className="font-semibold tabular-nums text-white/90">
                                     {formatINR(item.current_price)}
                                   </span>
-                                  <span className="text-emerald-300">
+                                  <span className="text-white/85">
                                     {item.bid_count ?? 0} bids
                                   </span>
                                 </div>
@@ -604,7 +604,7 @@ export function PublicMarketplaceHome({
           <motion.section id="live-auctions" {...revealProps} className="space-y-5">
             <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-300">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
                   <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Live &amp; Ending Soon</span>
                 </div>
@@ -731,7 +731,7 @@ export function PublicMarketplaceHome({
           {/* 6. HOW IT WORKS */}
           <motion.section id="how-it-works" {...revealProps} className="space-y-6">
             <div className="border-b border-white/10 pb-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/85">
                 The SnipeShield Standard
               </p>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">
@@ -783,7 +783,7 @@ export function PublicMarketplaceHome({
             <div className="relative z-10 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
               <div className="max-w-2xl space-y-2">
                 <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
-                  <Flame className="h-3.5 w-3.5 text-amber-300" />
+                  <Flame className="h-3.5 w-3.5 text-white/80" />
                   <span>Sell on Snipe Shield</span>
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">

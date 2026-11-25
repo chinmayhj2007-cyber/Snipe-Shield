@@ -144,9 +144,9 @@ export function TurnstileWidget({
     return (
       <div
         role="status"
-        className="flex items-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-950/30 px-3 py-2 text-[11px] leading-snug text-amber-100/90 backdrop-blur-md"
+        className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/[0.05] px-3 py-2 text-[11px] leading-snug text-white/80/90 backdrop-blur-md"
       >
-        <ShieldAlert className="h-4 w-4 shrink-0 text-amber-300/90" aria-hidden="true" />
+        <ShieldAlert className="h-4 w-4 shrink-0 text-white/80/90" aria-hidden="true" />
         <span>
           CAPTCHA protection inactive: set{' '}
           <code className="font-mono text-white">NEXT_PUBLIC_TURNSTILE_SITE_KEY</code> &amp;{' '}

@@ -674,7 +674,7 @@ export function AuctionDetailClient({
 
             <div className="flex items-center gap-2">
               {auction.is_demo ? (
-                <span className="rounded-full border border-amber-400/25 bg-amber-950/40 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-200">
+                <span className="rounded-full border border-white/20 bg-white/[0.05] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/80">
                   Demo
                 </span>
               ) : null}
@@ -705,7 +705,7 @@ export function AuctionDetailClient({
                 className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/[0.03] text-white/80 transition hover:border-white/30 hover:text-white"
               >
                 {copiedShare ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-300" />
+                  <Check className="h-3.5 w-3.5 text-white/85" />
                 ) : (
                   <Share2 className="h-3.5 w-3.5" />
                 )}
@@ -752,7 +752,7 @@ export function AuctionDetailClient({
                       }}
                       className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2 text-left text-xs text-white/85 transition hover:bg-white/[0.06] hover:text-white"
                     >
-                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+                      <ShieldCheck className="h-3.5 w-3.5 text-white/85" />
                       FairClose Anti-Snipe Info
                     </button>
                     <Link
@@ -771,11 +771,11 @@ export function AuctionDetailClient({
 
           {/* Optional FairClose Anti-Snipe Drawer (toggled from badge or overflow menu) */}
           {fairCloseInfoOpen ? (
-            <div className="mb-8 flex items-start justify-between gap-4 rounded-xl border border-emerald-400/25 bg-emerald-950/20 px-4 py-3 text-xs text-white/80">
+            <div className="mb-8 flex items-start justify-between gap-4 rounded-xl border border-white/25 bg-white/[0.06] px-4 py-3 text-xs text-white/80">
               <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-white/85" />
                 <div>
-                  <p className="font-medium text-emerald-200">
+                  <p className="font-medium text-white/85">
                     SnipeShield FairClose Protection Active
                   </p>
                   <p className="mt-0.5 text-white/65">
@@ -864,7 +864,7 @@ export function AuctionDetailClient({
                   </span>
                   {auction.defect_description ||
                   (auction.condition_proof_urls && auction.condition_proof_urls.length > 0) ? (
-                    <span className="rounded-full border border-amber-400/30 bg-amber-950/40 px-2.5 py-0.5 text-[11px] font-medium text-amber-200">
+                    <span className="rounded-full border border-white/20 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-medium text-white/80">
                       Condition Proof Verified
                     </span>
                   ) : null}
@@ -887,7 +887,7 @@ export function AuctionDetailClient({
                         {auction.seller_name}
                       </span>
                       {auction.seller_verified ? (
-                        <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+                        <BadgeCheck className="h-4 w-4 shrink-0 text-white/85" />
                       ) : null}
                     </div>
                     <p className="text-[11px] text-white/50">
@@ -906,10 +906,10 @@ export function AuctionDetailClient({
               {/* Condition & Defect Proof Disclosure (when applicable) */}
               {auction.defect_description ||
               (auction.condition_proof_urls && auction.condition_proof_urls.length > 0) ? (
-                <section className="space-y-4 rounded-xl border border-amber-400/20 bg-amber-950/15 p-5">
+                <section className="space-y-4 rounded-xl border border-white/20 bg-white/[0.05] p-5">
                   {auction.defect_description ? (
                     <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-200">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
                         <ShieldAlert className="h-4 w-4 shrink-0" />
                         <span>Reported Condition &amp; Defects</span>
                       </div>
@@ -923,7 +923,7 @@ export function AuctionDetailClient({
                     <div className="space-y-2.5 pt-1">
                       <div className="flex items-center justify-between text-xs">
                         <span className="flex items-center gap-1.5 font-medium text-white/85">
-                          <Camera className="h-3.5 w-3.5 text-amber-300" />
+                          <Camera className="h-3.5 w-3.5 text-white/80" />
                           Evidence Photos ({auction.condition_proof_urls.length})
                         </span>
                         <span className="text-[11px] text-white/45">Click to enlarge</span>
@@ -934,7 +934,7 @@ export function AuctionDetailClient({
                             key={url}
                             type="button"
                             onClick={() => setLightboxIndex(idx)}
-                            className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-white/15 bg-black/40 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-white/15 bg-black/40 focus:outline-none focus:ring-2 focus:ring-white/40"
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -1031,7 +1031,7 @@ export function AuctionDetailClient({
                   className="flex w-full cursor-pointer items-center justify-between text-left"
                 >
                   <div className="flex items-center gap-2">
-                    <FileCheck2 className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+                    <FileCheck2 className="h-4 w-4 text-white/85" aria-hidden="true" />
                     <span className="text-sm font-semibold tracking-tight text-white">
                       Asset Passport &amp; Records
                     </span>
@@ -1066,7 +1066,7 @@ export function AuctionDetailClient({
                               <span
                                 className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
                                   doc.verification_status === 'independently_verified'
-                                    ? 'border-emerald-400/30 bg-emerald-950/50 text-emerald-200'
+                                    ? 'border-white/25 bg-white/[0.06] text-white/85'
                                     : 'border-white/15 bg-white/[0.05] text-white/70'
                                 }`}
                               >
@@ -1231,12 +1231,12 @@ export function AuctionDetailClient({
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-4">
                   <div className="flex items-center gap-2">
                     {phase === 'live' && !auction.paused ? (
-                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/85">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
                         Live Auction
                       </span>
                     ) : auction.paused ? (
-                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300">
+                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/80">
                         Paused
                       </span>
                     ) : (
@@ -1251,7 +1251,7 @@ export function AuctionDetailClient({
                       title="Protected by ShieldLock & FairClose Anti-Sniping"
                       className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/65 transition hover:border-white/25 hover:text-white"
                     >
-                      <Lock className="h-2.5 w-2.5 text-emerald-300" />
+                      <Lock className="h-2.5 w-2.5 text-white/85" />
                       FairClose
                     </button>
                   </div>
@@ -1315,7 +1315,7 @@ export function AuctionDetailClient({
                     </div>
 
                     {isLeading ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-950/50 px-3 py-1 text-[11px] font-medium text-emerald-200">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/[0.06] px-3 py-1 text-[11px] font-medium text-white/85">
                         <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
                         {phase === 'ended' || auction.status === 'ended' ? 'Winner' : 'Leading'}
                       </span>
@@ -1383,7 +1383,7 @@ export function AuctionDetailClient({
                         {successMessage ? (
                           <div
                             role="status"
-                            className="rounded-xl border border-emerald-400/25 bg-emerald-950/40 px-3.5 py-2.5 text-xs text-emerald-200"
+                            className="rounded-xl border border-white/25 bg-white/[0.06] px-3.5 py-2.5 text-xs text-white/85"
                           >
                             {successMessage}
                           </div>
@@ -1416,10 +1416,10 @@ export function AuctionDetailClient({
                           className="flex w-full cursor-pointer items-center justify-between text-xs text-white/65 transition hover:text-white"
                         >
                           <span className="flex items-center gap-2 font-medium">
-                            <Bot className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+                            <Bot className="h-3.5 w-3.5 text-white/85" aria-hidden="true" />
                             Auto-Proxy &amp; AutoBid AI
                             {myAutoBid?.is_active || myProxyMax ? (
-                              <span className="rounded-full bg-emerald-950/70 px-2 py-0.5 text-[10px] text-emerald-300">
+                              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-white/85">
                                 Active
                               </span>
                             ) : null}
@@ -1472,7 +1472,7 @@ export function AuctionDetailClient({
                                 </span>
                                 {myAutoBid ? (
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[11px] text-emerald-300">
+                                    <span className="text-[11px] text-white/85">
                                       {myAutoBid.is_active ? 'Active' : 'Paused'} ·{' '}
                                       {formatINR(myAutoBid.max_amount)}
                                     </span>
@@ -1539,7 +1539,7 @@ export function AuctionDetailClient({
                                       type="checkbox"
                                       checked={autoBidConfirmed}
                                       onChange={(e) => setAutoBidConfirmed(e.target.checked)}
-                                      className="mt-0.5 accent-emerald-400"
+                                      className="mt-0.5 accent-white"
                                     />
                                     <span>
                                       Authorize server-side AutoBid up to my exact maximum limit.
@@ -1570,8 +1570,8 @@ export function AuctionDetailClient({
                               ? 'border-white/15 bg-white/10 text-white/70'
                               : auction.reserve_price !== null &&
                                   auction.current_price < auction.reserve_price
-                                ? 'border-amber-400/30 bg-amber-950/50 text-amber-200'
-                                : 'border-emerald-400/30 bg-emerald-950/50 text-emerald-200'
+                                ? 'border-white/20 bg-white/[0.05] text-white/80'
+                                : 'border-white/25 bg-white/[0.06] text-white/85'
                           }`}
                         >
                           {!auction.highest_bidder_id
@@ -1606,9 +1606,9 @@ export function AuctionDetailClient({
                         <div className="text-[11px] text-white/65">
                           Reserve:{' '}
                           {auction.current_price >= auction.reserve_price ? (
-                            <span className="font-medium text-emerald-300">Met</span>
+                            <span className="font-medium text-white/85">Met</span>
                           ) : (
-                            <span className="font-medium text-amber-300">
+                            <span className="font-medium text-white/80">
                               Not Met ({formatINR(auction.current_price)} /{' '}
                               {formatINR(auction.reserve_price)})
                             </span>
@@ -1618,8 +1618,8 @@ export function AuctionDetailClient({
 
                       {isLeading &&
                       (!auction.reserve_price || auction.current_price >= auction.reserve_price) ? (
-                        <div className="rounded-xl border border-emerald-400/25 bg-emerald-950/30 p-4 text-center">
-                          <p className="text-sm font-semibold text-emerald-200">
+                        <div className="rounded-xl border border-white/25 bg-white/[0.06] p-4 text-center">
+                          <p className="text-sm font-semibold text-white/85">
                             Congratulations, you won this auction.
                           </p>
                           <p className="mt-1 text-xs text-white/65">
@@ -1631,7 +1631,7 @@ export function AuctionDetailClient({
                             disabled={actionLoading}
                             className="smoky-cta-btn mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-xs font-semibold text-white"
                           >
-                            <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                            <CheckCircle2 className="h-4 w-4 text-white/85" />
                             {actionLoading ? 'Preparing Checkout...' : 'Proceed to Winner Checkout'}
                           </button>
                         </div>
@@ -1709,7 +1709,7 @@ export function AuctionDetailClient({
                 <h2 className="text-base font-semibold tracking-tight text-white">
                   Bidding History
                 </h2>
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" title="Real-time updates active" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white" title="Real-time updates active" />
               </div>
               <span className="text-xs text-white/50">
                 {totalBidsCount} {totalBidsCount === 1 ? 'bid' : 'bids'} · {uniqueBiddersCount}{' '}
@@ -1736,7 +1736,7 @@ export function AuctionDetailClient({
                           key={bid.id}
                           className={
                             isHighest
-                              ? 'bg-emerald-950/20 text-white'
+                              ? 'bg-white/[0.06] text-white'
                               : 'text-white/75 hover:bg-white/[0.02]'
                           }
                         >
@@ -1744,7 +1744,7 @@ export function AuctionDetailClient({
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-white">{bid.bidder_name}</span>
                               {isHighest ? (
-                                <span className="rounded-full border border-emerald-400/30 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                <span className="rounded-full border border-white/25 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/85">
                                   Highest Bid
                                 </span>
                               ) : null}
@@ -1785,7 +1785,7 @@ export function AuctionDetailClient({
 
             {extensions.length > 0 ? (
               <div className="mt-5 border-t border-white/10 pt-4">
-                <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-300">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-white/85">
                   <History className="h-3.5 w-3.5" />
                   FairClose Anti-Snipe Extensions
                 </p>

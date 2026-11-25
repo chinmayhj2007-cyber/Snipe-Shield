@@ -146,9 +146,9 @@ export const CountdownTimer = memo(function CountdownTimer({
   if (status !== 'active' || nowMs >= endMs) {
     return (
       <span
-        className={`inline-flex items-center gap-1.5 rounded-full border border-rose-400/30 bg-rose-950/60 px-2.5 py-0.5 text-xs font-semibold tracking-wider text-rose-200 ${className}`}
+        className={`inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium tracking-wider text-white/60 ${className}`}
       >
-        <Clock className="h-3.5 w-3.5 text-rose-300" aria-hidden="true" />
+        <Clock className="h-3.5 w-3.5 text-white/45" aria-hidden="true" />
         <span>AUCTION ENDED</span>
       </span>
     );
@@ -174,17 +174,17 @@ export const CountdownTimer = memo(function CountdownTimer({
   return (
     <span
       className={`inline-flex flex-wrap items-center gap-1.5 font-mono text-xs font-semibold tabular-nums ${
-        isSnipeWindow ? 'text-amber-300' : 'text-white/90'
+        isSnipeWindow ? 'text-white' : 'text-white/90'
       } ${className}`}
     >
       {isSnipeWindow ? (
-        <ShieldAlert className="h-3.5 w-3.5 animate-pulse text-amber-300" aria-hidden="true" />
+        <ShieldAlert className="h-3.5 w-3.5 animate-pulse text-white" aria-hidden="true" />
       ) : (
         <Clock className="h-3.5 w-3.5 text-[#a7adb6]" aria-hidden="true" />
       )}
       <span className="tracking-tight">{formatDuration(remainingMs, compact)}</span>
       {isSnipeWindow ? (
-        <span className="rounded-full border border-amber-300/40 bg-amber-500/20 px-1.5 py-0.5 font-sans text-[10px] font-medium text-amber-200">
+        <span className="rounded-full border border-white/30 bg-white/15 px-1.5 py-0.5 font-sans text-[10px] font-medium text-white">
           30s Anti-Snipe
         </span>
       ) : null}

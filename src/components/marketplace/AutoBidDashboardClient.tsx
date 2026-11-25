@@ -69,7 +69,7 @@ export function AutoBidDashboardClient({
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-950/50 px-3 py-1 text-[11px] font-medium text-emerald-200">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/[0.06] px-3 py-1 text-[11px] font-medium text-white/85">
               <Bot className="h-3.5 w-3.5" />
               Deterministic Rule Engine &bull; Budget Cap Enforced Server-Side
             </div>
@@ -120,7 +120,7 @@ export function AutoBidDashboardClient({
                       <span
                         className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase ${
                           cfg.is_active
-                            ? 'border-emerald-300/35 bg-emerald-950/60 text-emerald-200'
+                            ? 'border-white/25 bg-white/[0.06] text-white/85'
                             : 'border-white/20 bg-white/10 text-white/65'
                         }`}
                       >
@@ -139,7 +139,7 @@ export function AutoBidDashboardClient({
                       </div>
                       <div>
                         <span className="text-[10px] text-white/50">Remaining Headroom</span>
-                        <p className="font-semibold text-emerald-200">{formatINR(remaining)}</p>
+                        <p className="font-semibold text-white/85">{formatINR(remaining)}</p>
                       </div>
                     </div>
 

@@ -109,7 +109,7 @@ export function NotificationsClient({
                   type="checkbox"
                   checked={prefs[key]}
                   onChange={() => togglePref(key)}
-                  className="accent-emerald-400"
+                  className="accent-white"
                 />
               </label>
             ))}
@@ -132,7 +132,7 @@ export function NotificationsClient({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     {!n.is_read ? (
-                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      <span className="h-2 w-2 rounded-full bg-white" />
                     ) : null}
                     <span className="text-sm font-semibold">{n.title}</span>
                     <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase text-white/60">

@@ -236,7 +236,7 @@ export function OrdersClient({
           </div>
         ) : null}
         {message ? (
-          <div className="rounded-2xl border border-emerald-300/30 bg-emerald-950/50 px-4 py-3 text-xs text-emerald-100">
+          <div className="rounded-2xl border border-white/25 bg-white/[0.06] px-4 py-3 text-xs text-white/85">
             {message}
           </div>
         ) : null}
@@ -274,7 +274,7 @@ export function OrdersClient({
                         Total Payable: {formatINR(order.final_price)}
                       </p>
                       {order.tracking_number ? (
-                        <p className="flex items-center gap-1.5 text-xs text-emerald-200">
+                        <p className="flex items-center gap-1.5 text-xs text-white/85">
                           <Truck className="h-3.5 w-3.5" />
                           Tracking: {order.tracking_number}
                         </p>
@@ -286,9 +286,9 @@ export function OrdersClient({
                         <button
                           type="button"
                           onClick={() => setReceiptOrderId(order.id)}
-                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-950/40 px-3.5 text-xs font-medium text-emerald-200 hover:border-emerald-400/60 transition-colors"
+                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-white/[0.06] px-3.5 text-xs font-medium text-white/85 hover:border-white/25 transition-colors"
                         >
-                          <FileText className="h-3.5 w-3.5 text-emerald-400" />
+                          <FileText className="h-3.5 w-3.5 text-white/85" />
                           View Receipt
                         </button>
                       ) : null}
@@ -337,7 +337,7 @@ export function OrdersClient({
                           type="button"
                           onClick={() => handleConfirmDelivery(order.id)}
                           disabled={busyId === order.id}
-                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-emerald-300/35 bg-emerald-950/60 px-4 text-xs font-medium text-emerald-100"
+                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-white/[0.06] px-4 text-xs font-medium text-white/85"
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           Confirm Delivery
@@ -396,11 +396,13 @@ export function OrdersClient({
                   onClick={() => setRating(n)}
                   className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold ${
                     rating >= n
-                      ? 'border-amber-300 bg-amber-950/60 text-amber-200'
+                      ? 'border-white/45 bg-white text-neutral-950'
                       : 'border-white/20 text-white/50'
                   }`}
                 >
-                  {n} ★
+                  <span className="inline-flex items-center justify-center gap-1">
+                    {n} <Star className="h-3 w-3 fill-current" />
+                  </span>
                 </button>
               ))}
             </div>
@@ -488,7 +490,7 @@ export function OrdersClient({
                   </div>
                   <p className="mt-1 text-white/65">{d.description}</p>
                   {d.resolution ? (
-                    <p className="mt-1 text-emerald-200">Resolution: {d.resolution}</p>
+                    <p className="mt-1 text-white/85">Resolution: {d.resolution}</p>
                   ) : null}
                 </li>
               ))}

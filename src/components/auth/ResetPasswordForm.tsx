@@ -195,7 +195,7 @@ export function ResetPasswordForm({
         {successMessage ? (
           <div
             role="status"
-            className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-950/50 px-4 py-2.5 text-center text-xs text-emerald-100 backdrop-blur-md"
+            className="mt-4 rounded-2xl border border-white/25 bg-white/[0.06] px-4 py-2.5 text-center text-xs text-white/85 backdrop-blur-md"
           >
             {successMessage}
           </div>

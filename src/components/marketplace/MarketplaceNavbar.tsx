@@ -163,7 +163,7 @@ export function MarketplaceNavbar({ user }: MarketplaceNavbarProps) {
             <span
               className={`hidden items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider sm:inline-flex ${
                 isAdmin
-                  ? 'border-amber-300/40 bg-amber-950/60 text-amber-200'
+                  ? 'border-white/30 bg-white/15 text-white'
                   : isSeller
                     ? 'border-white/35 bg-[#e2e4e8] text-neutral-950'
                     : 'border-white/15 bg-white/10 text-white/90'
@@ -321,7 +321,7 @@ export function MarketplaceNavbar({ user }: MarketplaceNavbarProps) {
                 aria-label="Admin Console"
                 className={`flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition ${
                   pathname === '/admin'
-                    ? 'border-amber-300/45 bg-amber-950/60 text-amber-100'
+                    ? 'border-white/40 bg-white/15 text-white'
                     : 'border-white/20 bg-white/10 text-white hover:border-white/40'
                 }`}
               >
@@ -341,7 +341,7 @@ export function MarketplaceNavbar({ user }: MarketplaceNavbarProps) {
             >
               <Bell className="h-3.5 w-3.5" aria-hidden="true" />
               {unreadCount > 0 ? (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[9px] font-bold text-neutral-950">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-neutral-950">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               ) : null}
@@ -533,7 +533,7 @@ export function MarketplaceNavbar({ user }: MarketplaceNavbarProps) {
             {isAdmin ? (
               <Link
                 href="/admin"
-                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-amber-300/40 bg-amber-950/50 px-3 py-2.5 text-xs font-semibold text-amber-100"
+                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-xs font-semibold text-white"
               >
                 <Shield className="h-4 w-4" /> Admin Console
               </Link>

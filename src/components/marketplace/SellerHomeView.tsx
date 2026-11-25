@@ -211,7 +211,7 @@ export function SellerHomeView({
         {user.verificationStatus !== 'verified' ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/20 bg-white/[0.04] px-5 py-3 text-xs">
             <span className="flex items-center gap-2 text-white/85">
-              <ShieldAlert className="h-4 w-4 text-amber-300" />
+              <ShieldAlert className="h-4 w-4 text-white/80" />
               Seller Verification Status:{' '}
               <strong className="capitalize">
                 {(user.verificationStatus ?? 'unverified').replace('_', ' ')}
@@ -223,7 +223,7 @@ export function SellerHomeView({
             </Link>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-3xl border border-emerald-300/30 bg-emerald-950/30 px-5 py-2.5 text-xs text-emerald-200">
+          <div className="flex items-center gap-2 rounded-3xl border border-white/25 bg-white/[0.06] px-5 py-2.5 text-xs text-white/85">
             <BadgeCheck className="h-4 w-4" />
             <span>Verified SnipeShield Seller &bull; TrustScore {user.trustScore ?? 85}/100</span>
           </div>

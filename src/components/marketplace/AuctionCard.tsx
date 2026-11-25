@@ -153,14 +153,14 @@ export const AuctionCard = memo(function AuctionCard({
             <span
               className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md ${
                 phase === 'live'
-                  ? 'border-emerald-400/35 bg-emerald-950/80 text-emerald-200'
+                  ? 'border-white/30 bg-black/80 text-white'
                   : phase === 'upcoming'
-                    ? 'border-white/20 bg-black/75 text-white/85'
-                    : 'border-white/15 bg-black/75 text-white/55'
+                    ? 'border-white/20 bg-black/75 text-white/80'
+                    : 'border-white/15 bg-black/75 text-white/50'
               }`}
             >
               {phase === 'live' ? (
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
               ) : null}
               {phase === 'live' ? 'Live' : phase === 'upcoming' ? 'Upcoming' : 'Ended'}
             </span>
@@ -170,7 +170,7 @@ export const AuctionCard = memo(function AuctionCard({
             </span>
 
             {auction.is_demo ? (
-              <span className="rounded-full border border-amber-400/35 bg-amber-950/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-200 backdrop-blur-md">
+              <span className="rounded-full border border-white/20 bg-black/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/75 backdrop-blur-md">
                 DEMO
               </span>
             ) : null}
@@ -249,7 +249,7 @@ export const AuctionCard = memo(function AuctionCard({
               >
                 <span className="truncate">{auction.seller_name}</span>
                 {auction.seller_verified ? (
-                  <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-label="Verified Seller" />
+                  <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-white/85" aria-label="Verified Seller" />
                 ) : null}
               </Link>
             )}

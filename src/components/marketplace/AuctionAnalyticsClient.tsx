@@ -142,22 +142,22 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
         label: user.role === 'seller' ? 'Sold / Leading' : 'Winning',
         count: s.winning,
         pct: Math.round((s.winning / total) * 100),
-        barClass: 'bg-emerald-400',
-        textClass: 'text-emerald-300',
+        barClass: 'bg-white',
+        textClass: 'text-white',
       },
       {
         label: 'Active',
         count: s.active,
         pct: Math.round((s.active / total) * 100),
-        barClass: 'bg-sky-400',
-        textClass: 'text-sky-300',
+        barClass: 'bg-neutral-400',
+        textClass: 'text-neutral-300',
       },
       {
         label: user.role === 'seller' ? 'Unsold' : 'Outbid / Lost',
         count: s.losing,
         pct: Math.round((s.losing / total) * 100),
-        barClass: 'bg-amber-400',
-        textClass: 'text-amber-300',
+        barClass: 'bg-neutral-600',
+        textClass: 'text-neutral-400',
       },
     ];
   }, [data, user.role]);
@@ -184,8 +184,8 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
         {/* Header & Time Filters */}
         <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">
-              <BarChart3 className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-white/60">
+              <BarChart3 className="h-3.5 w-3.5 text-white/75" />
               <span>Real-Time Telemetry</span>
             </div>
             <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
@@ -237,7 +237,7 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
           <div className="rounded-2xl border border-white/10 bg-[#0d0f14]/90 p-5">
             <div className="flex items-center justify-between text-xs text-white/50">
               <span>Peak Bid Amount</span>
-              <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+              <TrendingUp className="h-3.5 w-3.5 text-white/75" />
             </div>
             <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
               {loading ? '—' : formatINR(data?.summary.peakBidAmount ?? 0)}
@@ -247,7 +247,7 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
           <div className="rounded-2xl border border-white/10 bg-[#0d0f14]/90 p-5">
             <div className="flex items-center justify-between text-xs text-white/50">
               <span>Average Bid</span>
-              <Activity className="h-3.5 w-3.5 text-sky-400" />
+              <Activity className="h-3.5 w-3.5 text-white/60" />
             </div>
             <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
               {loading ? '—' : formatINR(data?.summary.averageBidAmount ?? 0)}
@@ -257,7 +257,7 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
           <div className="rounded-2xl border border-white/10 bg-[#0d0f14]/90 p-5">
             <div className="flex items-center justify-between text-xs text-white/50">
               <span>Tracked Auctions</span>
-              <Trophy className="h-3.5 w-3.5 text-amber-300" />
+              <Trophy className="h-3.5 w-3.5 text-white/60" />
             </div>
             <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
               {loading ? '—' : (data?.summary.auctionsCount ?? 0).toLocaleString()}
@@ -301,7 +301,7 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                   Interactive peak bid curve alongside bid volume progression ({RANGE_TO_PERIOD[range]}).
                 </p>
               </div>
-              <span className="rounded-full border border-emerald-400/25 bg-emerald-950/40 px-3 py-1 text-[11px] font-medium tabular-nums text-emerald-200">
+              <span className="rounded-full border border-white/20 bg-white/[0.06] px-3 py-1 text-[11px] font-medium tabular-nums text-white">
                 Peak: {formatINR(data?.summary.peakBidAmount ?? 0)}
               </span>
             </div>
@@ -317,7 +317,7 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                 <div className="flex justify-center">
                   <PeakChart
                     width={290}
-                    accent="#388bff"
+                    accent="#cbd2de"
                     data={peakSeries}
                     labels={peakLabels}
                     value={data.summary.peakBidAmount}
@@ -342,18 +342,18 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                     <AreaChart data={data.timeSeries} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="peakAmtGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.35} />
-                          <stop offset="95%" stopColor="#60a5fa" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#ffffff" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="bidCntGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#34d399" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.22} />
+                          <stop offset="95%" stopColor="#9ca3af" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                      <XAxis dataKey="label" stroke="#6b7280" fontSize={11} tickLine={false} />
-                      <YAxis yAxisId="amt" stroke="#6b7280" fontSize={11} tickLine={false} />
-                      <YAxis yAxisId="cnt" orientation="right" stroke="#6b7280" fontSize={11} tickLine={false} />
+                      <XAxis dataKey="label" stroke="#71717a" fontSize={11} tickLine={false} />
+                      <YAxis yAxisId="amt" stroke="#71717a" fontSize={11} tickLine={false} />
+                      <YAxis yAxisId="cnt" orientation="right" stroke="#71717a" fontSize={11} tickLine={false} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: '#0b0e14',
@@ -368,8 +368,8 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                         type="monotone"
                         dataKey="peakAmount"
                         name="Peak Bid (₹)"
-                        stroke="#60a5fa"
-                        strokeWidth={2.2}
+                        stroke="#ffffff"
+                        strokeWidth={2}
                         fill="url(#peakAmtGrad)"
                       />
                       <Area
@@ -377,8 +377,9 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                         type="monotone"
                         dataKey="bids"
                         name="Bid Count"
-                        stroke="#34d399"
-                        strokeWidth={2}
+                        stroke="#9ca3af"
+                        strokeWidth={1.75}
+                        strokeDasharray="4 4"
                         fill="url(#bidCntGrad)"
                       />
                     </AreaChart>
@@ -511,7 +512,7 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                       {data.categoryDistribution.slice(0, 6).map((entry, idx) => (
                         <Cell
                           key={entry.category}
-                          fill={idx === 0 ? '#34d399' : '#64748b'}
+                          fill={idx === 0 ? '#ffffff' : '#52525b'}
                         />
                       ))}
                     </Bar>
@@ -543,13 +544,13 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
               </div>
 
               <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5 text-white/80">
-                  <Gavel className="h-3.5 w-3.5 text-sky-400" />
+                <span className="flex items-center gap-1.5 text-white/85">
+                  <Gavel className="h-3.5 w-3.5 text-white" />
                   Manual: <strong className="tabular-nums">{manualPct}%</strong> (
                   {data?.biddingMode.manual ?? 0})
                 </span>
-                <span className="flex items-center gap-1.5 text-white/80">
-                  <Bot className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="flex items-center gap-1.5 text-white/65">
+                  <Bot className="h-3.5 w-3.5 text-neutral-400" />
                   AutoBid/Proxy: <strong className="tabular-nums">{autoPct}%</strong> (
                   {data?.biddingMode.auto ?? 0})
                 </span>
@@ -563,8 +564,8 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.timeSeries} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
                     <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                    <XAxis dataKey="label" stroke="#6b7280" fontSize={11} tickLine={false} />
-                    <YAxis stroke="#6b7280" fontSize={11} tickLine={false} allowDecimals={false} />
+                    <XAxis dataKey="label" stroke="#71717a" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#71717a" fontSize={11} tickLine={false} allowDecimals={false} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#0b0e14',
@@ -574,8 +575,8 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                         fontSize: '12px',
                       }}
                     />
-                    <Bar dataKey="manual" name="Manual Bids" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="auto" name="AutoBid / Proxy" fill="#34d399" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="manual" name="Manual Bids" fill="#ffffff" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="auto" name="AutoBid / Proxy" fill="#71717a" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

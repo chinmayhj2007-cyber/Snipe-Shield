@@ -73,10 +73,10 @@ function formatDateTime(isoString: string | null): string {
 
 function PaymentStatusBadge({ status }: { status: ReceiptData['paymentStatus'] }) {
   const styles: Record<string, string> = {
-    pending: 'bg-amber-50 text-amber-700 border border-amber-200',
-    paid: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+    pending: 'bg-neutral-100 text-neutral-800 border border-neutral-300',
+    paid: 'bg-neutral-900 text-white border border-neutral-900',
     failed: 'bg-red-50 text-red-700 border border-red-200',
-    refunded: 'bg-sky-50 text-sky-700 border border-sky-200',
+    refunded: 'bg-neutral-200 text-neutral-700 border border-neutral-300',
   };
   const labels: Record<string, string> = {
     pending: 'PAYMENT PENDING',
@@ -211,7 +211,7 @@ export function WinningReceiptModal({
               className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 transition-colors flex items-center gap-1.5 shadow-sm"
               title="Toggle interactive thermal printer experience"
             >
-              <Printer className="h-3.5 w-3.5 text-emerald-600" />
+              <Printer className="h-3.5 w-3.5 text-neutral-800" />
               <span>{showThermalPrinter ? 'Standard Invoice' : 'Thermal Simulator'}</span>
             </button>
             <button
@@ -226,7 +226,7 @@ export function WinningReceiptModal({
           {/* Loading / Error states */}
           {loading && (
             <div className="flex flex-col items-center justify-center gap-4 py-20 px-8">
-              <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+              <Loader2 className="h-10 w-10 animate-spin text-neutral-700" />
               <p className="text-gray-500 text-sm">Loading your winning receipt…</p>
             </div>
           )}
@@ -237,7 +237,7 @@ export function WinningReceiptModal({
               <p className="text-gray-700 font-medium">{error}</p>
               <button
                 onClick={() => { fetchedRef.current = false; void fetchReceipt(); }}
-                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                className="rounded-lg bg-neutral-900 px-5 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
               >
                 Retry
               </button>
@@ -279,16 +279,16 @@ export function WinningReceiptModal({
                   <div>
                     {/* SnipeShield brand */}
                     <div className="flex items-center gap-2 mb-3">
-                      <ShieldCheck className="h-6 w-6 text-emerald-400" />
-                      <span className="text-emerald-400 font-bold tracking-widest text-xs uppercase">SnipeShield</span>
+                      <ShieldCheck className="h-6 w-6 text-white/85" />
+                      <span className="text-white/85 font-bold tracking-widest text-xs uppercase">SnipeShield</span>
                     </div>
                     <div className="flex items-center gap-2.5">
-                      <Trophy className="h-7 w-7 text-amber-400" />
+                      <Trophy className="h-7 w-7 text-white/80" />
                       <div>
                         <h2 className="text-white font-black text-xl tracking-tight leading-tight">
                           CONGRATULATIONS!
                         </h2>
-                        <p className="text-emerald-300 font-semibold text-sm tracking-wide">
+                        <p className="text-white/85 font-semibold text-sm tracking-wide">
                           AUCTION WON
                         </p>
                       </div>
@@ -346,7 +346,7 @@ export function WinningReceiptModal({
                     <div className="flex-1 min-w-0">
                       <h3 className="text-base font-bold text-gray-900 leading-snug mb-1">{receipt.productName}</h3>
                       {receipt.category && (
-                        <span className="inline-block text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-2.5 py-0.5 mb-1">
+                        <span className="inline-block text-xs font-medium text-neutral-700 bg-neutral-100 border border-neutral-200 rounded-full px-2.5 py-0.5 mb-1">
                           {receipt.category}
                         </span>
                       )}
@@ -374,14 +374,14 @@ export function WinningReceiptModal({
                   <div className="rounded-xl bg-white border border-gray-200 p-4 shadow-sm">
                     <div className="flex items-center gap-2 mb-1.5">
                       {receipt.sellerVerified
-                        ? <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                        ? <ShieldCheck className="h-4 w-4 text-neutral-800" />
                         : <User className="h-4 w-4 text-gray-400" />
                       }
                       <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Seller</p>
                     </div>
                     <p className="text-sm font-bold text-gray-800">{receipt.sellerName}</p>
                     {receipt.sellerVerified && (
-                      <span className="text-xs text-emerald-600 font-semibold">✓ Verified Seller</span>
+                      <span className="text-xs text-neutral-700 font-semibold">Verified Seller</span>
                     )}
                   </div>
                 </div>
@@ -418,11 +418,10 @@ export function WinningReceiptModal({
                       </span>
                     </div>
                     <div
-                      className="flex justify-between items-center px-4 py-4"
-                      style={{ background: 'linear-gradient(135deg, #f0fdf4, #ecfdf5)' }}
+                      className="flex justify-between items-center px-4 py-4 bg-neutral-100 border-t border-neutral-200"
                     >
                       <span className="text-base font-black text-gray-900">Total Payable</span>
-                      <span className="text-xl font-black text-emerald-700 font-mono">
+                      <span className="text-xl font-black text-neutral-900 font-mono">
                         {formatINR(receipt.totalPayable)}
                       </span>
                     </div>
@@ -431,19 +430,19 @@ export function WinningReceiptModal({
 
                 {/* Payment transaction info (only when paid) */}
                 {receipt.paymentStatus === 'paid' && receipt.razorpayPaymentId && (
-                  <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                  <div className="rounded-xl bg-neutral-100 border border-neutral-300 p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      <p className="text-sm font-bold text-emerald-800">Payment Verified</p>
+                      <CheckCircle2 className="h-4 w-4 text-neutral-900" />
+                      <p className="text-sm font-bold text-neutral-900">Payment Verified</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-xs text-emerald-600 mb-0.5">Transaction ID</p>
-                        <p className="text-xs font-mono font-bold text-emerald-900 break-all">{receipt.razorpayPaymentId}</p>
+                        <p className="text-xs text-neutral-500 mb-0.5">Transaction ID</p>
+                        <p className="text-xs font-mono font-bold text-neutral-900 break-all">{receipt.razorpayPaymentId}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-emerald-600 mb-0.5">Payment Date</p>
-                        <p className="text-xs font-semibold text-emerald-900">{formatDateTime(receipt.updatedAt)}</p>
+                        <p className="text-xs text-neutral-500 mb-0.5">Payment Date</p>
+                        <p className="text-xs font-semibold text-neutral-800">{formatDateTime(receipt.updatedAt)}</p>
                       </div>
                     </div>
                   </div>
@@ -452,9 +451,9 @@ export function WinningReceiptModal({
                 {/* Thank-you message */}
                 <div className="text-center py-2 border-t border-gray-200">
                   <div className="flex items-center justify-center gap-2 mb-1">
-                    <Award className="h-4 w-4 text-amber-500" />
+                    <Award className="h-4 w-4 text-neutral-700" />
                     <span className="text-sm font-bold text-gray-700">Thank you for bidding with SnipeShield!</span>
-                    <Award className="h-4 w-4 text-amber-500" />
+                    <Award className="h-4 w-4 text-neutral-700" />
                   </div>
                   <p className="text-xs text-gray-500">
                     Your item is secured in escrow. Complete payment to notify the seller to ship.

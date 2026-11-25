@@ -1,17 +1,14 @@
 'use client';
 
 import {
-  ArrowRight,
   ArrowUpRight,
   Bell,
   Clock,
   Eye,
   Flame,
   Gavel,
-  Lock,
   ShieldCheck,
   Sparkles,
-  Store,
   Timer,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -299,14 +296,6 @@ export function BidderHomeView({
                   speckleOpacity={0.25}
                   className="flex h-12 w-full items-center justify-center px-7 !text-xs !font-semibold !tracking-wider shadow-[0_12px_32px_rgba(0,0,0,0.5)] sm:w-auto"
                 />
-
-                <Link
-                  href="/profile"
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] px-6 text-xs font-semibold tracking-wide text-white/90 transition hover:border-white/35 hover:bg-white/[0.07] hover:text-white sm:w-auto"
-                >
-                  <Store className="h-4 w-4 text-white/70" />
-                  <span>Start Selling</span>
-                </Link>
               </div>
 
               <div className="flex flex-wrap items-center gap-6 border-t border-white/10 pt-5 text-xs text-white/55">
@@ -732,32 +721,6 @@ export function BidderHomeView({
             </div>
           </section>
 
-          {/* 7. BECOME A SELLER CTA */}
-          <section className="smoky-glass-card rounded-2xl border border-white/15 p-8 sm:p-12">
-            <div className="relative z-10 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
-              <div className="max-w-2xl space-y-2">
-                <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
-                  <Lock className="h-3.5 w-3.5 text-emerald-300" />
-                  <span>Sell on Snipe Shield</span>
-                </div>
-                <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                  Have something extraordinary to auction?
-                </h2>
-                <p className="text-sm leading-relaxed text-white/65">
-                  Switch to Seller mode or manage your account in Profile to launch verified
-                  auctions with Asset Passport protection.
-                </p>
-              </div>
-
-              <Link
-                href="/profile"
-                className="smoky-cta-btn inline-flex h-12 shrink-0 items-center gap-2 rounded-xl px-7 text-xs font-semibold tracking-wider text-white"
-              >
-                <span>Start Selling</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </section>
         </div>
       </main>
 

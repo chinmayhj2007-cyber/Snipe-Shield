@@ -5,7 +5,6 @@ import { useRef, useState } from 'react';
 import { DEMO_MODE_MESSAGE, mapAuthError } from '@/lib/auth/errors';
 import type { UserRole } from '@/lib/auth/validation';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import { isAppleAuthEnabled } from '@/lib/supabase/config';
 
 interface OAuthButtonsProps {
   disabled?: boolean;
@@ -36,20 +35,12 @@ function GoogleGlyph() {
   );
 }
 
-function AppleGlyph() {
-  return (
-    <svg className="h-4 w-4 shrink-0 fill-white" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M16.365 12.69c-.022-2.342 1.912-3.47 1.999-3.524-1.093-1.596-2.79-1.815-3.39-1.84-1.425-.145-2.805.844-3.532.844-.742 0-1.863-.826-3.071-.803-1.555.023-2.999.908-3.798 2.299-1.635 2.83-.416 7 1.16 9.29.78 1.123 1.7 2.38 2.905 2.335 1.176-.047 1.617-.754 3.038-.754 1.408 0 1.816.754 3.046.727 1.264-.02 2.059-1.138 2.818-2.266.897-1.307 1.26-2.583 1.279-2.65-.029-.012-2.433-.932-2.454-3.658zm-2.34-6.83c.635-.773 1.069-1.842.95-2.915-.92.038-2.053.614-2.712 1.385-.585.676-1.1 1.768-.963 2.811 1.028.08 2.089-.519 2.725-1.281z" />
-    </svg>
-  );
-}
-
 export function OAuthButtons({
   disabled = false,
   role,
   onStatusMessage,
 }: OAuthButtonsProps) {
-  const [activeProvider, setActiveProvider] = useState<'google' | 'apple' | null>(null);
+  const [activeProvider, setActiveProvider] = useState<'google' | null>(null);
   const inFlightRef = useRef(false);
 
   async function handleGoogleSignIn() {
@@ -74,6 +65,10 @@ export function OAuthButtons({
         provider: 'google',
         options: {
           redirectTo: callbackUrl.toString(),
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
@@ -89,48 +84,6 @@ export function OAuthButtons({
     }
   }
 
-  async function handleAppleSignIn() {
-    if (disabled || inFlightRef.current) return;
-
-    if (!isAppleAuthEnabled()) {
-      onStatusMessage("Apple sign-in isn't set up yet.");
-      return;
-    }
-
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) {
-      onStatusMessage(DEMO_MODE_MESSAGE);
-      return;
-    }
-
-    inFlightRef.current = true;
-    setActiveProvider('apple');
-
-    try {
-      const callbackUrl = new URL('/auth/callback', window.location.origin);
-      if (role) {
-        callbackUrl.searchParams.set('role', role);
-      }
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: callbackUrl.toString(),
-        },
-      });
-
-      if (error) {
-        onStatusMessage(mapAuthError(error, 'oauth_apple'));
-        setActiveProvider(null);
-        inFlightRef.current = false;
-      }
-    } catch (err) {
-      onStatusMessage(mapAuthError(err, 'oauth_apple'));
-      setActiveProvider(null);
-      inFlightRef.current = false;
-    }
-  }
-
   const isBusy = disabled || activeProvider !== null;
 
   return (
@@ -141,33 +94,19 @@ export function OAuthButtons({
         <span className="h-px flex-1 bg-white/15" />
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-3">
         <button
           type="button"
           onClick={handleGoogleSignIn}
           disabled={isBusy}
-          className="flex h-[46px] cursor-pointer items-center justify-center gap-2 rounded-full border border-white/18 bg-white/[0.04] px-4 text-sm font-medium text-white/95 backdrop-blur-md transition hover:border-white/35 hover:bg-white/[0.09] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-[46px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-full border border-white/18 bg-white/[0.04] px-4 text-sm font-medium text-white/95 backdrop-blur-md transition hover:border-white/35 hover:bg-white/[0.09] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {activeProvider === 'google' ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           ) : (
             <GoogleGlyph />
           )}
-          <span>Google</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={handleAppleSignIn}
-          disabled={isBusy}
-          className="flex h-[46px] cursor-pointer items-center justify-center gap-2 rounded-full border border-white/18 bg-white/[0.04] px-4 text-sm font-medium text-white/95 backdrop-blur-md transition hover:border-white/35 hover:bg-white/[0.09] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {activeProvider === 'apple' ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <AppleGlyph />
-          )}
-          <span>Apple</span>
+          <span>Continue with Google</span>
         </button>
       </div>
     </div>

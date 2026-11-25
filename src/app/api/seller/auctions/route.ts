@@ -43,6 +43,68 @@ function isValidSellerImageUrl(
   }
 }
 
+export async function GET(request: NextRequest) {
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) {
+    return NextResponse.json({ error: 'Database unavailable.' }, { status: 503 });
+  }
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const status = searchParams.get('status');
+
+  let query = supabase
+    .from('auctions')
+    .select(
+      `
+      id,
+      title,
+      description,
+      category,
+      condition,
+      image_url,
+      image_urls,
+      starting_price,
+      current_price,
+      reserve_price,
+      status,
+      starts_at,
+      ends_at,
+      views_count,
+      bid_count,
+      highest_bidder_id,
+      paused,
+      created_at
+    `
+    )
+    .eq('seller_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (status && status !== 'all') {
+    query = query.eq('status', status);
+  }
+
+  const { data: sellerAuctions, error } = await query;
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  return NextResponse.json({
+    sellerId: user.id,
+    auctions: sellerAuctions ?? [],
+    total: sellerAuctions?.length ?? 0,
+  });
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {

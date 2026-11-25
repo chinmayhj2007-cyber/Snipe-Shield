@@ -1,6 +1,88 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) return NextResponse.json({ error: 'Database unavailable.' }, { status: 503 });
+
+  const { data: auction, error } = await supabase
+    .from('auctions')
+    .select(
+      `
+      id,
+      seller_id,
+      title,
+      description,
+      category,
+      condition,
+      defect_description,
+      condition_proof_urls,
+      image_url,
+      image_urls,
+      starting_price,
+      current_price,
+      min_increment,
+      highest_bidder_id,
+      status,
+      starts_at,
+      ends_at,
+      original_ends_at,
+      extensions_count,
+      shipping_details,
+      delivery_info,
+      return_policy,
+      shipping_cost,
+      views_count,
+      is_demo,
+      paused,
+      moderation_status,
+      bid_count,
+      created_at
+    `
+    )
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error || !auction) {
+    return NextResponse.json({ error: 'Auction not found.' }, { status: 404 });
+  }
+
+  // Also fetch seller profile details and top 50 bids for complete details
+  const [{ data: sellerProfile }, { data: bids }, { data: documents }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, full_name, verification_status, trust_score')
+      .eq('id', auction.seller_id)
+      .maybeSingle(),
+    supabase
+      .from('bids')
+      .select('id, bidder_id, amount, is_auto_proxy, bid_source, created_at')
+      .eq('auction_id', id)
+      .order('created_at', { ascending: false })
+      .limit(50),
+    supabase
+      .from('asset_documents')
+      .select('id, doc_type, title, file_url, sha256_hash, verification_status, created_at')
+      .eq('auction_id', id)
+      .order('created_at', { ascending: false }),
+  ]);
+
+  return NextResponse.json({
+    auction: {
+      ...auction,
+      seller_name: sellerProfile?.full_name ?? 'Seller',
+      seller_verified: sellerProfile?.verification_status === 'verified',
+      seller_trust_score: sellerProfile?.trust_score ?? 50,
+    },
+    bids: bids ?? [],
+    documents: documents ?? [],
+  });
+}
+
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }

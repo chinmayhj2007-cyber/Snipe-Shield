@@ -73,14 +73,23 @@ export async function GET(request: NextRequest) {
   if (profileError) {
     console.error('Auth callback profile lookup error:', profileError.message);
   } else if (!existingProfile) {
-    const resolvedRole = requestedRole
-      ? normalizeRole(requestedRole)
-      : normalizeRole(user.user_metadata?.role);
+    const rawRole = requestedRole ?? user.user_metadata?.role ?? 'bidder';
+    const resolvedRole = normalizeRole(rawRole);
+    const fullName =
+      (user.user_metadata?.full_name as string | undefined) ??
+      (user.user_metadata?.name as string | undefined) ??
+      '';
+    const avatarUrl =
+      (user.user_metadata?.avatar_url as string | undefined) ??
+      (user.user_metadata?.picture as string | undefined) ??
+      null;
 
     const { error: insertError } = await supabase.from('profiles').insert({
       id: user.id,
       email: user.email ?? user.phone ?? '',
       phone: user.phone ?? '',
+      full_name: fullName,
+      avatar_url: avatarUrl,
       role: resolvedRole,
     });
 

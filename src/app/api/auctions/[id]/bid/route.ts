@@ -18,6 +18,51 @@ function parseStrictFiniteNumber(value: unknown): number | null {
   return null;
 }
 
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id: auctionId } = await context.params;
+  if (!UUID_REGEX.test(auctionId)) {
+    return NextResponse.json({ error: 'Invalid auction ID.' }, { status: 400 });
+  }
+
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) {
+    return NextResponse.json({ error: 'Database unavailable.' }, { status: 503 });
+  }
+
+  const [{ data: bids, error: bidsError }, { data: auction }] = await Promise.all([
+    supabase
+      .from('bids')
+      .select('id, auction_id, bidder_id, amount, is_auto_proxy, bid_source, created_at')
+      .eq('auction_id', auctionId)
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('auctions')
+      .select('current_price, highest_bidder_id, bid_count, status')
+      .eq('id', auctionId)
+      .maybeSingle(),
+  ]);
+
+  if (bidsError) {
+    return NextResponse.json({ error: bidsError.message }, { status: 400 });
+  }
+
+  const highestBid = bids && bids.length > 0 ? bids[0] : null;
+
+  return NextResponse.json({
+    auctionId,
+    currentPrice: auction?.current_price ?? 0,
+    highestBidderId: auction?.highest_bidder_id ?? null,
+    totalBids: auction?.bid_count ?? (bids?.length ?? 0),
+    status: auction?.status ?? 'active',
+    highestBid,
+    history: bids ?? [],
+  });
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -85,6 +130,20 @@ export async function POST(
 
   if (amount === null || amount <= 0 || amount > MAX_BID_AMOUNT) {
     return NextResponse.json({ error: 'Please enter a valid bid amount.' }, { status: 400 });
+  }
+
+  // Self-bidding prevention check
+  const { data: auctionData } = await supabase
+    .from('auctions')
+    .select('seller_id')
+    .eq('id', auctionId)
+    .maybeSingle();
+
+  if (auctionData && auctionData.seller_id === user.id) {
+    return NextResponse.json(
+      { error: 'You cannot place bids on your own listing.' },
+      { status: 403 }
+    );
   }
 
   if (

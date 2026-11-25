@@ -85,6 +85,34 @@ const RANGE_TO_PERIOD: Record<RangeKey, string> = {
   all: 'All Time',
 };
 
+// Restrained, professional financial-analytics data visualization palette
+const CHART_COLORS = {
+  mutedBlue: '#5b8def',
+  mutedTeal: '#4ea8a0',
+  softViolet: '#8b7ec8',
+  slateBlue: '#6b8cae',
+  slateGrey: '#64748b',
+  coolGrey: '#94a3b8',
+} as const;
+
+const CATEGORY_BAR_PALETTE = [
+  CHART_COLORS.mutedBlue,
+  CHART_COLORS.mutedTeal,
+  CHART_COLORS.softViolet,
+  CHART_COLORS.slateBlue,
+  CHART_COLORS.slateGrey,
+  CHART_COLORS.coolGrey,
+];
+
+const TOOLTIP_STYLE = {
+  backgroundColor: '#0b0e14',
+  border: '1px solid rgba(255,255,255,0.14)',
+  borderRadius: '10px',
+  color: '#f8fafc',
+  fontSize: '12px',
+  boxShadow: '0 12px 30px rgba(0,0,0,0.45)',
+};
+
 interface AuctionAnalyticsClientProps {
   user: MarketplaceUser;
 }
@@ -142,22 +170,19 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
         label: user.role === 'seller' ? 'Sold / Leading' : 'Winning',
         count: s.winning,
         pct: Math.round((s.winning / total) * 100),
-        barClass: 'bg-white',
-        textClass: 'text-white',
+        color: CHART_COLORS.mutedTeal,
       },
       {
         label: 'Active',
         count: s.active,
         pct: Math.round((s.active / total) * 100),
-        barClass: 'bg-neutral-400',
-        textClass: 'text-neutral-300',
+        color: CHART_COLORS.mutedBlue,
       },
       {
         label: user.role === 'seller' ? 'Unsold' : 'Outbid / Lost',
         count: s.losing,
         pct: Math.round((s.losing / total) * 100),
-        barClass: 'bg-neutral-600',
-        textClass: 'text-neutral-400',
+        color: CHART_COLORS.slateGrey,
       },
     ];
   }, [data, user.role]);
@@ -174,7 +199,16 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
     return 100 - manualPct;
   }, [data, manualPct]);
 
-  const topCategory = data?.categoryDistribution[0]?.category ?? null;
+  const topCategories = useMemo(
+    () => (data?.categoryDistribution ?? []).slice(0, 6),
+    [data]
+  );
+
+  const topCategory = topCategories[0]?.category ?? null;
+  const totalCategoryBids = useMemo(
+    () => topCategories.reduce((sum, c) => sum + c.bids, 0),
+    [topCategories]
+  );
 
   return (
     <div className="smoky-ambient-page min-h-dvh text-white">
@@ -267,15 +301,15 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
 
         {/* Error State */}
         {error ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-rose-400/25 bg-rose-950/30 px-5 py-4 text-xs text-rose-100">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/20 bg-white/[0.04] px-5 py-4 text-xs text-white/90">
             <div className="flex items-center gap-2.5">
-              <AlertCircle className="h-4 w-4 text-rose-300" />
+              <AlertCircle className="h-4 w-4 text-white/75" />
               <span>{error}</span>
             </div>
             <button
               type="button"
               onClick={() => void fetchAnalytics(range)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-rose-300/30 bg-rose-950/60 px-3 py-1.5 font-medium text-white hover:bg-rose-900/60"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/20 bg-white/[0.06] px-3 py-1.5 font-medium text-white hover:bg-white/[0.12]"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Retry
@@ -285,7 +319,7 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
 
         {/* 4-Graph Responsive Dashboard Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* GRAPH 1: Bids & Peak Amount Over Time (Full-width 2-col span featuring PeakChart + Multi-Series Progression) */}
+          {/* GRAPH 1: Bids & Peak Amount Over Time */}
           <motion.section
             initial={shouldReduceMotion ? false : { y: 12 }}
             animate={{ y: 0 }}
@@ -301,9 +335,26 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                   Interactive peak bid curve alongside bid volume progression ({RANGE_TO_PERIOD[range]}).
                 </p>
               </div>
-              <span className="rounded-full border border-white/20 bg-white/[0.06] px-3 py-1 text-[11px] font-medium tabular-nums text-white">
-                Peak: {formatINR(data?.summary.peakBidAmount ?? 0)}
-              </span>
+
+              <div className="flex flex-wrap items-center gap-4 text-xs">
+                <span className="inline-flex items-center gap-1.5 text-white/80">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: CHART_COLORS.mutedBlue }}
+                  />
+                  Peak Bid (₹)
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-white/70">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: CHART_COLORS.mutedTeal }}
+                  />
+                  Bid Volume
+                </span>
+                <span className="rounded-full border border-white/15 bg-white/[0.05] px-3 py-1 text-[11px] font-medium tabular-nums text-white">
+                  Peak: {formatINR(data?.summary.peakBidAmount ?? 0)}
+                </span>
+              </div>
             </div>
 
             {loading ? (
@@ -313,11 +364,10 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
               </div>
             ) : data && data.timeSeries.length > 0 ? (
               <div className="mt-6 grid items-center gap-6 lg:grid-cols-[310px_1fr]">
-                {/* Integrated PeakChart Signature Card */}
                 <div className="flex justify-center">
                   <PeakChart
                     width={290}
-                    accent="#cbd2de"
+                    accent={CHART_COLORS.mutedBlue}
                     data={peakSeries}
                     labels={peakLabels}
                     value={data.summary.peakBidAmount}
@@ -336,51 +386,63 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                   />
                 </div>
 
-                {/* Multi-Series Bid Amount & Bid Count Area Chart */}
                 <div className="h-[340px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data.timeSeries} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                    <AreaChart data={data.timeSeries} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
                       <defs>
                         <linearGradient id="peakAmtGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ffffff" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
+                          <stop offset="5%" stopColor={CHART_COLORS.mutedBlue} stopOpacity={0.22} />
+                          <stop offset="95%" stopColor={CHART_COLORS.mutedBlue} stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="bidCntGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.22} />
-                          <stop offset="95%" stopColor="#9ca3af" stopOpacity={0} />
+                          <stop offset="5%" stopColor={CHART_COLORS.mutedTeal} stopOpacity={0.18} />
+                          <stop offset="95%" stopColor={CHART_COLORS.mutedTeal} stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                      <XAxis dataKey="label" stroke="#71717a" fontSize={11} tickLine={false} />
-                      <YAxis yAxisId="amt" stroke="#71717a" fontSize={11} tickLine={false} />
-                      <YAxis yAxisId="cnt" orientation="right" stroke="#71717a" fontSize={11} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#0b0e14',
-                          border: '1px solid rgba(255,255,255,0.14)',
-                          borderRadius: '12px',
-                          color: '#fff',
-                          fontSize: '12px',
-                        }}
+                      <XAxis
+                        dataKey="label"
+                        stroke="#71717a"
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                       />
+                      <YAxis
+                        yAxisId="amt"
+                        stroke="#71717a"
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        yAxisId="cnt"
+                        orientation="right"
+                        stroke="#71717a"
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} />
                       <Area
                         yAxisId="amt"
                         type="monotone"
                         dataKey="peakAmount"
                         name="Peak Bid (₹)"
-                        stroke="#ffffff"
-                        strokeWidth={2}
+                        stroke={CHART_COLORS.mutedBlue}
+                        strokeWidth={2.25}
                         fill="url(#peakAmtGrad)"
+                        activeDot={{ r: 4, fill: CHART_COLORS.mutedBlue, stroke: '#0d0f14', strokeWidth: 2 }}
                       />
                       <Area
                         yAxisId="cnt"
                         type="monotone"
                         dataKey="bids"
                         name="Bid Count"
-                        stroke="#9ca3af"
-                        strokeWidth={1.75}
+                        stroke={CHART_COLORS.mutedTeal}
+                        strokeWidth={2}
                         strokeDasharray="4 4"
                         fill="url(#bidCntGrad)"
+                        activeDot={{ r: 4, fill: CHART_COLORS.mutedTeal, stroke: '#0d0f14', strokeWidth: 2 }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -401,31 +463,49 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
             transition={{ duration: 0.35, delay: 0.05 }}
             className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0d0f14]/95 p-6"
           >
-            <div className="border-b border-white/[0.08] pb-4">
-              <h2 className="text-base font-semibold tracking-tight text-white">
-                Winning vs Losing vs Active Auctions
-              </h2>
-              <p className="mt-0.5 text-xs text-white/50">
-                Real-time outcome distribution across participated auctions.
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
+              <div>
+                <h2 className="text-base font-semibold tracking-tight text-white">
+                  Winning vs Losing vs Active Auctions
+                </h2>
+                <p className="mt-0.5 text-xs text-white/50">
+                  Real-time outcome distribution across participated auctions.
+                </p>
+              </div>
+              <span className="rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-white/80">
+                {data?.statusBreakdown.total ?? 0} total
+              </span>
             </div>
 
             {loading ? (
-              <div className="mt-6 h-56 animate-pulse rounded-xl bg-white/[0.04]" />
+              <div className="mt-6 h-[260px] animate-pulse rounded-xl bg-white/[0.04]" />
             ) : data && data.statusBreakdown.total > 0 ? (
-              <div className="mt-6 space-y-6">
+              <div className="mt-6 flex flex-1 flex-col justify-between space-y-6">
                 {/* Segmented Proportional Bar */}
-                <div className="flex h-4 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                  {statusRows.map((row) =>
-                    row.pct > 0 ? (
-                      <div
-                        key={row.label}
-                        style={{ width: `${row.pct}%` }}
-                        className={`${row.barClass} transition-all duration-500`}
-                        title={`${row.label}: ${row.count} (${row.pct}%)`}
-                      />
-                    ) : null
-                  )}
+                <div className="space-y-2">
+                  <div className="flex h-4 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    {statusRows.map((row) =>
+                      row.pct > 0 ? (
+                        <div
+                          key={row.label}
+                          style={{ width: `${row.pct}%`, backgroundColor: row.color }}
+                          className="transition-all duration-500"
+                          title={`${row.label}: ${row.count} (${row.pct}%)`}
+                        />
+                      ) : null
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 text-[11px] text-white/60">
+                    {statusRows.map((row) => (
+                      <span key={`legend-${row.label}`} className="inline-flex items-center gap-1.5">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: row.color }}
+                        />
+                        {row.label}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Detailed Breakdown Rows */}
@@ -433,8 +513,14 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                   {statusRows.map((row) => (
                     <div key={row.label} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-white/85">{row.label}</span>
-                        <span className={`font-semibold tabular-nums ${row.textClass}`}>
+                        <span className="inline-flex items-center gap-2 font-medium text-white/85">
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: row.color }}
+                          />
+                          {row.label}
+                        </span>
+                        <span className="font-semibold tabular-nums text-white/90">
                           {row.count} ({row.pct}%)
                         </span>
                       </div>
@@ -443,7 +529,8 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                           initial={shouldReduceMotion ? false : { width: 0 }}
                           animate={{ width: `${row.pct}%` }}
                           transition={{ duration: 0.6, ease: 'easeOut' }}
-                          className={`h-full rounded-full ${row.barClass}`}
+                          style={{ backgroundColor: row.color }}
+                          className="h-full rounded-full"
                         />
                       </div>
                     </div>
@@ -451,82 +538,100 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                 </div>
               </div>
             ) : (
-              <div className="flex h-56 items-center justify-center text-xs text-white/45">
+              <div className="flex h-[260px] items-center justify-center text-xs text-white/45">
                 Participate in or list an auction to view outcome ratios.
               </div>
             )}
           </motion.section>
 
-          {/* GRAPH 3: Category-wise Bidding Distribution */}
+          {/* GRAPH 3: Category-wise Bidding Distribution (Redesigned to match Graph 1 & 2 polish) */}
           <motion.section
             initial={shouldReduceMotion ? false : { y: 12 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 }}
             className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0d0f14]/95 p-6"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/[0.08] pb-4">
               <div>
                 <h2 className="text-base font-semibold tracking-tight text-white">
                   Category-wise Bidding Distribution
                 </h2>
                 <p className="mt-0.5 text-xs text-white/50">
-                  Bid concentration across marketplace departments.
+                  Bid concentration &amp; volume across marketplace departments.
                 </p>
               </div>
               {topCategory ? (
-                <span className="rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-0.5 text-[10px] font-medium text-white/85">
+                <span className="rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-white/85">
                   Top: {topCategory}
                 </span>
               ) : null}
             </div>
 
             {loading ? (
-              <div className="mt-6 h-56 animate-pulse rounded-xl bg-white/[0.04]" />
-            ) : data && data.categoryDistribution.length > 0 ? (
-              <div className="mt-5 h-60 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={data.categoryDistribution.slice(0, 6)}
-                    layout="vertical"
-                    margin={{ top: 0, right: 16, left: 10, bottom: 0 }}
-                  >
-                    <XAxis type="number" stroke="#6b7280" fontSize={11} tickLine={false} />
-                    <YAxis
-                      type="category"
-                      dataKey="category"
-                      stroke="#9ca3af"
-                      fontSize={11}
-                      width={96}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#0b0e14',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        borderRadius: '12px',
-                        color: '#fff',
-                        fontSize: '12px',
-                      }}
-                    />
-                    <Bar dataKey="bids" name="Bids" radius={[0, 6, 6, 0]}>
-                      {data.categoryDistribution.slice(0, 6).map((entry, idx) => (
-                        <Cell
-                          key={entry.category}
-                          fill={idx === 0 ? '#ffffff' : '#52525b'}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="mt-6 h-[260px] animate-pulse rounded-xl bg-white/[0.04]" />
+            ) : topCategories.length > 0 ? (
+              <div className="mt-5 flex flex-1 flex-col justify-between space-y-4">
+                <div className="h-[220px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={topCategories}
+                      layout="vertical"
+                      margin={{ top: 4, right: 20, left: 4, bottom: 4 }}
+                      barCategoryGap="24%"
+                    >
+                      <CartesianGrid stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                      <XAxis
+                        type="number"
+                        stroke="#71717a"
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                        allowDecimals={false}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="category"
+                        stroke="#9ca3af"
+                        tick={{ fill: '#e5e7eb', fontSize: 11 }}
+                        width={104}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={TOOLTIP_STYLE}
+                        cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                        formatter={(value, _name, props) => {
+                          const vol = (props?.payload as { volume?: number } | undefined)?.volume ?? 0;
+                          return [`${value} bids (${formatINR(vol)})`, 'Activity'];
+                        }}
+                      />
+                      <Bar dataKey="bids" name="Bids" barSize={16} radius={[0, 6, 6, 0]}>
+                        {topCategories.map((entry, idx) => (
+                          <Cell
+                            key={entry.category}
+                            fill={CATEGORY_BAR_PALETTE[idx % CATEGORY_BAR_PALETTE.length]}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-3 text-[11px] text-white/55">
+                  <span>{topCategories.length} active categories</span>
+                  <span className="tabular-nums font-medium text-white/80">
+                    {totalCategoryBids.toLocaleString()} total category bids
+                  </span>
+                </div>
               </div>
             ) : (
-              <div className="flex h-56 items-center justify-center text-xs text-white/45">
+              <div className="flex h-[260px] items-center justify-center text-xs text-white/45">
                 No category bidding data recorded yet.
               </div>
             )}
           </motion.section>
 
-          {/* GRAPH 4: Manual Bids vs AutoBid / Proxy Activity */}
+          {/* GRAPH 4: Manual Bids vs AutoBid / Proxy Activity (Redesigned to match Graph 1 & 2 polish) */}
           <motion.section
             initial={shouldReduceMotion ? false : { y: 12 }}
             animate={{ y: 0 }}
@@ -543,45 +648,77 @@ export function AuctionAnalyticsClient({ user }: AuctionAnalyticsClientProps) {
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5 text-white/85">
-                  <Gavel className="h-3.5 w-3.5 text-white" />
+              <div className="flex flex-wrap items-center gap-4 text-xs">
+                <span className="inline-flex items-center gap-2 text-white/85">
+                  <span
+                    className="h-2.5 w-2.5 rounded-sm"
+                    style={{ backgroundColor: CHART_COLORS.mutedBlue }}
+                  />
+                  <Gavel className="h-3.5 w-3.5 text-white/60" />
                   Manual: <strong className="tabular-nums">{manualPct}%</strong> (
                   {data?.biddingMode.manual ?? 0})
                 </span>
-                <span className="flex items-center gap-1.5 text-white/65">
-                  <Bot className="h-3.5 w-3.5 text-neutral-400" />
-                  AutoBid/Proxy: <strong className="tabular-nums">{autoPct}%</strong> (
+                <span className="inline-flex items-center gap-2 text-white/75">
+                  <span
+                    className="h-2.5 w-2.5 rounded-sm"
+                    style={{ backgroundColor: CHART_COLORS.softViolet }}
+                  />
+                  <Bot className="h-3.5 w-3.5 text-white/60" />
+                  AutoBid / Proxy: <strong className="tabular-nums">{autoPct}%</strong> (
                   {data?.biddingMode.auto ?? 0})
                 </span>
               </div>
             </div>
 
             {loading ? (
-              <div className="mt-6 h-56 animate-pulse rounded-xl bg-white/[0.04]" />
+              <div className="mt-6 h-[290px] animate-pulse rounded-xl bg-white/[0.04]" />
             ) : data && data.timeSeries.length > 0 ? (
-              <div className="mt-5 h-64 w-full">
+              <div className="mt-6 h-[290px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.timeSeries} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                  <BarChart
+                    data={data.timeSeries}
+                    margin={{ top: 10, right: 16, left: 4, bottom: 0 }}
+                    barGap={6}
+                    barCategoryGap="24%"
+                  >
                     <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                    <XAxis dataKey="label" stroke="#71717a" fontSize={11} tickLine={false} />
-                    <YAxis stroke="#71717a" fontSize={11} tickLine={false} allowDecimals={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#0b0e14',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        borderRadius: '12px',
-                        color: '#fff',
-                        fontSize: '12px',
-                      }}
+                    <XAxis
+                      dataKey="label"
+                      stroke="#71717a"
+                      tick={{ fill: '#9ca3af', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                     />
-                    <Bar dataKey="manual" name="Manual Bids" fill="#ffffff" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="auto" name="AutoBid / Proxy" fill="#71717a" radius={[4, 4, 0, 0]} />
+                    <YAxis
+                      stroke="#71717a"
+                      tick={{ fill: '#9ca3af', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                    />
+                    <Bar
+                      dataKey="manual"
+                      name="Manual Bids"
+                      fill={CHART_COLORS.mutedBlue}
+                      maxBarSize={24}
+                      radius={[5, 5, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="auto"
+                      name="AutoBid / Proxy"
+                      fill={CHART_COLORS.softViolet}
+                      maxBarSize={24}
+                      radius={[5, 5, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="flex h-56 items-center justify-center text-xs text-white/45">
+              <div className="flex h-[290px] items-center justify-center text-xs text-white/45">
                 No manual or automated bid activity recorded in this window.
               </div>
             )}

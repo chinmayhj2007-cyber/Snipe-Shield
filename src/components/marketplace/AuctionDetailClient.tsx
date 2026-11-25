@@ -1374,7 +1374,7 @@ export function AuctionDetailClient({
                         {errorMessage ? (
                           <div
                             role="alert"
-                            className="rounded-xl border border-rose-400/25 bg-rose-950/40 px-3.5 py-2.5 text-xs text-rose-200"
+                            className="rounded-xl border border-white/25 bg-white/[0.06] px-3.5 py-2.5 text-xs text-white/90"
                           >
                             {errorMessage}
                           </div>
@@ -1685,7 +1685,7 @@ export function AuctionDetailClient({
                             type="button"
                             onClick={() => handleSellerAction('cancel')}
                             disabled={actionLoading}
-                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-950/40 px-3.5 text-xs font-medium text-rose-200 transition hover:border-rose-400/50"
+                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/20 bg-white/[0.04] px-3.5 text-xs font-medium text-white/80 transition hover:border-white/40 hover:text-white"
                           >
                             Cancel Listing
                           </button>

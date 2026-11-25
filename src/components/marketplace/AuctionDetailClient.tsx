@@ -39,6 +39,7 @@ import {
   type MarketplaceUser,
 } from '@/lib/marketplace/types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { WinningReceiptModal } from '@/components/marketplace/WinningReceiptModal';
 
 interface AuctionDetailClientProps {
   user: MarketplaceUser;
@@ -103,6 +104,10 @@ export function AuctionDetailClient({
 
   // Order / Seller Controls state
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Winning Receipt Modal state
+  const [receiptOrderId, setReceiptOrderId] = useState<string | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
   useEffect(() => {
     setAuction(initialAuction);
@@ -480,15 +485,56 @@ export function AuctionDetailClient({
     setActionLoading(true);
     try {
       const res = await fetch(`/api/auctions/${auction.id}/close`, { method: 'POST' });
-      const data = (await res.json()) as { closed?: boolean; error?: string };
+      const data = (await res.json()) as { closed?: boolean; orderId?: string; order?: { id: string }; error?: string };
       if (!res.ok) {
         setErrorMessage(data.error ?? 'Unable to finalize order.');
         return;
+      }
+      // Try to get the order ID from the response so we can show the receipt modal
+      const oid = data.orderId ?? data.order?.id ?? null;
+      if (oid) {
+        const seenKey = `ss_receipt_seen_${oid}`;
+        if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(seenKey)) {
+          sessionStorage.setItem(seenKey, '1');
+          setReceiptOrderId(oid);
+          setReceiptOpen(true);
+          return; // Stay on page — receipt modal is open
+        }
       }
       router.push('/orders');
     } finally {
       setActionLoading(false);
     }
+  }
+
+  async function handleReceiptPayment(orderId: string) {
+    // Initiates Razorpay payment for the winning order and verifies it server-side
+    const createRes = await fetch('/api/payments/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId }),
+    });
+    const createData = (await createRes.json()) as {
+      razorpayOrderId?: string;
+      error?: string;
+    };
+    if (!createRes.ok || !createData.razorpayOrderId) {
+      throw new Error(createData.error ?? 'Could not initiate payment.');
+    }
+    const verifyRes = await fetch('/api/payments/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId,
+        razorpayOrderId: createData.razorpayOrderId,
+        testModeConfirm: true,
+      }),
+    });
+    const verifyData = (await verifyRes.json()) as { error?: string };
+    if (!verifyRes.ok) {
+      throw new Error(verifyData.error ?? 'Payment verification failed.');
+    }
+    router.refresh();
   }
 
   async function handleSellerAction(action: 'pause' | 'resume' | 'cancel') {
@@ -538,7 +584,8 @@ export function AuctionDetailClient({
   );
 
   return (
-    <div className="smoky-ambient-page min-h-dvh text-white">
+    <>
+      <div className="smoky-ambient-page min-h-dvh text-white">
       <MarketplaceNavbar user={user} />
 
       <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
@@ -834,7 +881,40 @@ export function AuctionDetailClient({
                     endsAt={auction.ends_at}
                     status={auction.status}
                     auctionId={auction.id}
-                    onExpire={() => router.refresh()}
+                    onExpire={async () => {
+                      // Refresh page data so auction state reflects 'ended'
+                      router.refresh();
+                      // If the current user is the winner, attempt to auto-open receipt
+                      // We need to fetch the order after the refresh; use a short delay
+                      if (
+                        auction.highest_bidder_id === user.id &&
+                        (!auction.reserve_price || auction.current_price >= auction.reserve_price)
+                      ) {
+                        try {
+                          const closeRes = await fetch(`/api/auctions/${auction.id}/close`, {
+                            method: 'POST',
+                          });
+                          const closeData = (await closeRes.json()) as {
+                            orderId?: string;
+                            order?: { id: string };
+                          };
+                          const oid = closeData.orderId ?? closeData.order?.id ?? null;
+                          if (oid) {
+                            const seenKey = `ss_receipt_seen_${oid}`;
+                            if (
+                              typeof sessionStorage !== 'undefined' &&
+                              !sessionStorage.getItem(seenKey)
+                            ) {
+                              sessionStorage.setItem(seenKey, '1');
+                              setReceiptOrderId(oid);
+                              setReceiptOpen(true);
+                            }
+                          }
+                        } catch {
+                          // Silently ignore — the user can still click "Proceed to Winner Checkout"
+                        }
+                      }
+                    }}
                   />
                 </div>
 
@@ -1342,5 +1422,14 @@ export function AuctionDetailClient({
         </div>
       </main>
     </div>
+
+    {/* Winning Receipt Modal — shown once per session for the auction winner */}
+    <WinningReceiptModal
+      orderId={receiptOrderId ?? ''}
+      isOpen={receiptOpen && !!receiptOrderId}
+      onClose={() => setReceiptOpen(false)}
+      onProceedToPayment={handleReceiptPayment}
+    />
+    </>
   );
 }

@@ -41,6 +41,26 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
+  // Role guard: only bidders may place bids (sellers cannot bid; prevents self-bidding)
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('role, is_suspended')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (callerProfile?.role === 'seller') {
+    return NextResponse.json(
+      { error: 'Sellers cannot place bids. Switch to a bidder account to participate.' },
+      { status: 403 }
+    );
+  }
+  if (callerProfile?.is_suspended) {
+    return NextResponse.json(
+      { error: 'Your account has been suspended. Please contact support.' },
+      { status: 403 }
+    );
+  }
+
   let rawBody: unknown;
   try {
     rawBody = await request.json();

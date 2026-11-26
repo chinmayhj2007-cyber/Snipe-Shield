@@ -47,16 +47,27 @@ export const AuctionCard = memo(function AuctionCard({
   }, [imageUrl]);
 
   useEffect(() => {
-    setMountedNowMs(Date.now());
-    if (isPreview) return;
-    try {
-      const raw = localStorage.getItem('snipeshield_compare_ids');
-      const ids = raw ? (JSON.parse(raw) as string[]) : [];
-      setInCompare(Array.isArray(ids) && ids.includes(auction.id));
-    } catch {
-      setInCompare(false);
+    const now = Date.now();
+    setMountedNowMs(now);
+    const endMs = new Date(auction.ends_at).getTime();
+    let timerId: number | undefined;
+    if (Number.isFinite(endMs) && endMs > now && auction.status !== 'ended') {
+      const delay = Math.min(endMs - now + 250, 2_147_483_000);
+      timerId = window.setTimeout(() => setMountedNowMs(Date.now()), delay);
     }
-  }, [auction.id, isPreview]);
+    if (!isPreview) {
+      try {
+        const raw = localStorage.getItem('snipeshield_compare_ids');
+        const ids = raw ? (JSON.parse(raw) as string[]) : [];
+        setInCompare(Array.isArray(ids) && ids.includes(auction.id));
+      } catch {
+        setInCompare(false);
+      }
+    }
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+    };
+  }, [auction.id, auction.ends_at, auction.status, isPreview]);
 
   const phase =
     mountedNowMs === null

@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   Sparkles,
   Store,
+  Trash2,
   TrendingUp,
   Trophy,
   Truck,
@@ -127,6 +128,8 @@ export function AuctionDetailClient({
 
   // Order / Seller Controls state
   const [actionLoading, setActionLoading] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Winning Receipt Modal state
   const [receiptOrderId, setReceiptOrderId] = useState<string | null>(null);
@@ -1263,6 +1266,7 @@ export function AuctionDetailClient({
                     compact
                     auctionId={auction.id}
                     onExpire={async () => {
+                      setMountedNowMs(Date.now());
                       router.refresh();
                       if (
                         auction.highest_bidder_id === user.id &&
@@ -1660,6 +1664,18 @@ export function AuctionDetailClient({
                             }`
                         : 'Sellers and admins view active listings in read-only mode.'}
                     </p>
+                    {isOwnListing && (phase === 'ended' || auction.status === 'ended') ? (
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmOpen(true)}
+                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3.5 text-xs font-medium text-white/85 transition hover:border-white/35 hover:text-white"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          Delete Completed Auction
+                        </button>
+                      </div>
+                    ) : null}
                     {isOwnListing && phase === 'live' ? (
                       <div className="flex flex-wrap gap-2 pt-1">
                         <button
@@ -1880,6 +1896,86 @@ export function AuctionDetailClient({
         onClose={() => setReceiptOpen(false)}
         onProceedToPayment={handleReceiptPayment}
       />
+
+      {/* Delete Completed Auction Confirmation Modal */}
+      {deleteConfirmOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="detail-delete-auction-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+          onClick={() => {
+            if (!deleting) setDeleteConfirmOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-white/15 bg-[#0d0f14] p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-white/85">
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3
+                  id="detail-delete-auction-title"
+                  className="text-base font-semibold tracking-tight text-white"
+                >
+                  Delete Completed Auction
+                </h3>
+                <p className="mt-1 truncate text-xs font-medium text-white/55">
+                  {auction.title}
+                </p>
+                <p className="mt-3 text-xs leading-relaxed text-white/75">
+                  Are you sure you want to delete this completed auction? This action cannot be
+                  undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-white/10 pt-4">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(false)}
+                disabled={deleting}
+                className="h-9 cursor-pointer rounded-lg border border-white/15 bg-white/[0.03] px-4 text-xs font-medium text-white/80 transition hover:border-white/30 hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (deleting) return;
+                  setDeleting(true);
+                  setErrorMessage(null);
+                  try {
+                    const res = await fetch(`/api/auctions/${auction.id}`, {
+                      method: 'DELETE',
+                    });
+                    const data = (await res.json().catch(() => ({}))) as { error?: string };
+                    if (!res.ok) {
+                      setErrorMessage(data.error ?? 'Failed to delete completed auction.');
+                      setDeleteConfirmOpen(false);
+                      return;
+                    }
+                    router.push('/seller/home');
+                    router.refresh();
+                  } catch {
+                    setErrorMessage('Network error while deleting auction.');
+                    setDeleteConfirmOpen(false);
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                disabled={deleting}
+                className="h-9 cursor-pointer rounded-lg bg-white px-4 text-xs font-semibold text-neutral-950 transition hover:bg-neutral-200 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete Auction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

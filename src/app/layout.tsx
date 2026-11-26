@@ -12,6 +12,14 @@ export const metadata: Metadata = {
   title: 'Snipe Shield — Live Auction & Bidding Platform',
   description:
     'Snipe Shield authentication portal for Avishkar 26 Real-Time Online Auction & Bidding Platform (Team DedSec).',
+  icons: {
+    icon: [
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+    ],
+    shortcut: '/favicon-32x32.png',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
 };
 
 export const viewport: Viewport = {

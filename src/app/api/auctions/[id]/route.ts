@@ -184,26 +184,74 @@ export async function DELETE(
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
 
-  const { data: auction } = await supabase
+  const { data: auction, error: fetchError } = await supabase
     .from('auctions')
-    .select('id, seller_id, status, bid_count')
+    .select('id, seller_id, title, status, ends_at, bid_count')
     .eq('id', id)
     .maybeSingle();
 
+  if (fetchError) {
+    return NextResponse.json({ error: 'Unable to load auction.' }, { status: 400 });
+  }
   if (!auction) return NextResponse.json({ error: 'Auction not found.' }, { status: 404 });
-  if (auction.seller_id !== user.id) return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
-  if (auction.bid_count > 0) {
+  if (auction.seller_id !== user.id) {
+    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+  }
+
+  const isCompletedOrEnded =
+    auction.status === 'ended' || new Date(auction.ends_at).getTime() <= Date.now();
+  if (!isCompletedOrEnded) {
     return NextResponse.json(
-      { error: 'Cannot delete an auction that already has bids.' },
+      { error: 'Only completed or ended auctions can be deleted.' },
       { status: 400 }
     );
   }
 
-  const { error } = await supabase
-    .from('auctions')
-    .update({ status: 'cancelled' })
-    .eq('id', id);
+  const [{ data: existingBids }, { data: existingOrders }] = await Promise.all([
+    supabase
+      .from('bids')
+      .select('id, bidder_id, amount, is_auto_proxy, bid_source, created_at')
+      .eq('auction_id', id),
+    supabase
+      .from('orders')
+      .select('id, buyer_id, seller_id, final_price, platform_fee, payment_status, status, razorpay_payment_id, created_at')
+      .eq('auction_id', id),
+  ]);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ ok: true }, { status: 200 });
+  await supabase
+    .from('audit_logs')
+    .insert({
+      user_id: user.id,
+      action: 'auction_deleted_by_seller',
+      entity_type: 'auction',
+      entity_id: id,
+      metadata: {
+        title: auction.title,
+        status: auction.status,
+        bid_count: auction.bid_count,
+        retained_bids: existingBids ?? [],
+        retained_orders: existingOrders ?? [],
+      },
+    })
+    .then(() => {});
+
+  const { data: deletedRows, error: deleteError } = await supabase
+    .from('auctions')
+    .delete()
+    .eq('id', id)
+    .eq('seller_id', user.id)
+    .select('id');
+
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 400 });
+  }
+
+  if (!deletedRows || deletedRows.length === 0) {
+    return NextResponse.json(
+      { error: 'Deletion blocked by ownership or status policy.' },
+      { status: 403 }
+    );
+  }
+
+  return NextResponse.json({ ok: true, deletedId: id }, { status: 200 });
 }

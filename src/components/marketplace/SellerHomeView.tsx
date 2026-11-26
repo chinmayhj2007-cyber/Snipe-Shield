@@ -1,14 +1,18 @@
 'use client';
 
 import {
+  AlertCircle,
   BadgeCheck,
   BarChart3,
+  CheckCircle2,
   Eye,
   Flame,
   PackagePlus,
   ShieldAlert,
   Sparkles,
   Store,
+  Trash2,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -51,6 +55,12 @@ export function SellerHomeView({
   const [savedSet, setSavedSet] = useState<Set<string>>(() => new Set(initialSavedIds));
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [mountedNowMs, setMountedNowMs] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AuctionItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteFeedback, setDeleteFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const auctionsRef = useRef<AuctionItem[]>(initialAuctions);
 
   useEffect(() => setAuctions(initialAuctions), [initialAuctions]);
@@ -136,6 +146,45 @@ export function SellerHomeView({
   }, []);
 
   const handleCategoryReset = useCallback(() => setSelectedCategory(undefined), []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    setDeleteFeedback(null);
+
+    try {
+      const res = await fetch(`/api/auctions/${deleteTarget.id}`, {
+        method: 'DELETE',
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+
+      if (!res.ok) {
+        setDeleteFeedback({
+          type: 'error',
+          message: data.error ?? 'Failed to delete completed auction.',
+        });
+        setDeleteTarget(null);
+        return;
+      }
+
+      const deletedId = deleteTarget.id;
+      const deletedTitle = deleteTarget.title;
+      setAuctions((prev) => prev.filter((a) => a.id !== deletedId));
+      setDeleteTarget(null);
+      setDeleteFeedback({
+        type: 'success',
+        message: `"${deletedTitle}" has been deleted.`,
+      });
+    } catch {
+      setDeleteFeedback({
+        type: 'error',
+        message: 'Network error while deleting auction. Please try again.',
+      });
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteTarget, deleting]);
 
   const {
     myListings,
@@ -362,6 +411,34 @@ export function SellerHomeView({
             </Link>
           </div>
 
+          {deleteFeedback ? (
+            <div
+              role={deleteFeedback.type === 'error' ? 'alert' : 'status'}
+              className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-xs ${
+                deleteFeedback.type === 'success'
+                  ? 'border-white/20 bg-white/[0.05] text-white'
+                  : 'border-white/25 bg-white/[0.06] text-white/90'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                {deleteFeedback.type === 'success' ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-white" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 shrink-0 text-white/80" />
+                )}
+                {deleteFeedback.message}
+              </span>
+              <button
+                type="button"
+                onClick={() => setDeleteFeedback(null)}
+                aria-label="Dismiss notification"
+                className="cursor-pointer rounded-md p-1 text-white/60 hover:text-white"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : null}
+
           {myListings.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {myListings.map((auction) => (
@@ -370,6 +447,7 @@ export function SellerHomeView({
                   auction={auction}
                   isSaved={savedSet.has(auction.id)}
                   onToggleSave={handleToggleSave}
+                  onRequestDelete={(item) => setDeleteTarget(item)}
                   viewerRole="seller"
                   viewerId={user.id}
                 />
@@ -459,6 +537,64 @@ export function SellerHomeView({
       </main>
 
       <SiteFooter sellHref="/seller/create-listing" />
+
+      {/* Delete Completed Auction Confirmation Modal */}
+      {deleteTarget ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-auction-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+          onClick={() => {
+            if (!deleting) setDeleteTarget(null);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-white/15 bg-[#0d0f14] p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-white/85">
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3
+                  id="delete-auction-modal-title"
+                  className="text-base font-semibold tracking-tight text-white"
+                >
+                  Delete Completed Auction
+                </h3>
+                <p className="mt-1 truncate text-xs font-medium text-white/55">
+                  {deleteTarget.title}
+                </p>
+                <p className="mt-3 text-xs leading-relaxed text-white/75">
+                  Are you sure you want to delete this completed auction? This action cannot be
+                  undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-white/10 pt-4">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="h-9 cursor-pointer rounded-lg border border-white/15 bg-white/[0.03] px-4 text-xs font-medium text-white/80 transition hover:border-white/30 hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConfirmDelete()}
+                disabled={deleting}
+                className="h-9 cursor-pointer rounded-lg bg-white px-4 text-xs font-semibold text-neutral-950 transition hover:bg-neutral-200 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete Auction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, BadgeCheck, Bookmark, Gavel, GitCompare } from 'lucide-react';
+import { ArrowUpRight, BadgeCheck, Bookmark, Gavel, GitCompare, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { memo, useEffect, useRef, useState } from 'react';
 import { CountdownTimer } from '@/components/marketplace/CountdownTimer';
@@ -15,6 +15,7 @@ interface AuctionCardProps {
   auction: AuctionItem;
   isSaved: boolean;
   onToggleSave?: (auctionId: string, nextSaved: boolean) => void;
+  onRequestDelete?: (auction: AuctionItem) => void;
   viewerRole: 'bidder' | 'seller' | 'admin';
   viewerId?: string;
 }
@@ -23,6 +24,7 @@ export const AuctionCard = memo(function AuctionCard({
   auction,
   isSaved,
   onToggleSave,
+  onRequestDelete,
   viewerRole,
   viewerId,
 }: AuctionCardProps) {
@@ -177,6 +179,25 @@ export const AuctionCard = memo(function AuctionCard({
           </div>
 
           <div className="flex items-center gap-1.5">
+            {isOwnListing &&
+            (phase === 'ended' || auction.status === 'ended') &&
+            onRequestDelete &&
+            !isPreview ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onRequestDelete(auction);
+                }}
+                aria-label="Delete completed auction"
+                title="Delete completed auction"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/65 text-white/80 backdrop-blur-md transition hover:border-white/40 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/45"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            ) : null}
+
             <button
               type="button"
               onClick={handleCompareToggle}

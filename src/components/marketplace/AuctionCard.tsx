@@ -190,10 +190,7 @@ export const AuctionCard = memo(function AuctionCard({
           </div>
 
           <div className="flex items-center gap-1.5">
-            {isOwnListing &&
-            (phase === 'ended' || auction.status === 'ended') &&
-            onRequestDelete &&
-            !isPreview ? (
+            {isOwnListing && onRequestDelete && !isPreview ? (
               <button
                 type="button"
                 onClick={(e) => {
@@ -201,8 +198,8 @@ export const AuctionCard = memo(function AuctionCard({
                   e.stopPropagation();
                   onRequestDelete(auction);
                 }}
-                aria-label="Delete completed auction"
-                title="Delete completed auction"
+                aria-label="Delete auction"
+                title="Delete auction"
                 className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/65 text-white/80 backdrop-blur-md transition hover:border-white/40 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/45"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />

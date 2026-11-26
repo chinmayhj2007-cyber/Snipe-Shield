@@ -562,14 +562,16 @@ export function SellerHomeView({
                   id="delete-auction-modal-title"
                   className="text-base font-semibold tracking-tight text-white"
                 >
-                  Delete Completed Auction
+                  Delete Auction
                 </h3>
                 <p className="mt-1 truncate text-xs font-medium text-white/55">
                   {deleteTarget.title}
                 </p>
                 <p className="mt-3 text-xs leading-relaxed text-white/75">
-                  Are you sure you want to delete this completed auction? This action cannot be
-                  undone.
+                  Are you sure you want to delete this auction? This action cannot be undone.
+                  {(deleteTarget.bid_count ?? 0) > 0
+                    ? ` This listing currently has ${deleteTarget.bid_count} active bid(s).`
+                    : ''}
                 </p>
               </div>
             </div>

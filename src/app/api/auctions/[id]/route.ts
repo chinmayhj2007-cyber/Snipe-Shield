@@ -198,15 +198,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
-  const isCompletedOrEnded =
-    auction.status === 'ended' || new Date(auction.ends_at).getTime() <= Date.now();
-  if (!isCompletedOrEnded) {
-    return NextResponse.json(
-      { error: 'Only completed or ended auctions can be deleted.' },
-      { status: 400 }
-    );
-  }
-
   const [{ data: existingBids }, { data: existingOrders }] = await Promise.all([
     supabase
       .from('bids')

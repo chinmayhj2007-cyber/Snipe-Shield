@@ -1664,48 +1664,48 @@ export function AuctionDetailClient({
                             }`
                         : 'Sellers and admins view active listings in read-only mode.'}
                     </p>
-                    {isOwnListing && (phase === 'ended' || auction.status === 'ended') ? (
-                      <div className="pt-1">
+                    {isOwnListing ? (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {phase === 'live' ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleSellerAction(auction.paused ? 'resume' : 'pause')
+                              }
+                              disabled={actionLoading}
+                              className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.05] px-3.5 text-xs font-medium text-white transition hover:border-white/35"
+                            >
+                              {auction.paused ? (
+                                <>
+                                  <Play className="h-3.5 w-3.5" /> Resume
+                                </>
+                              ) : (
+                                <>
+                                  <Pause className="h-3.5 w-3.5" /> Pause
+                                </>
+                              )}
+                            </button>
+                            {(auction.bid_count ?? 0) === 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => handleSellerAction('cancel')}
+                                disabled={actionLoading}
+                                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/20 bg-white/[0.04] px-3.5 text-xs font-medium text-white/80 transition hover:border-white/40 hover:text-white"
+                              >
+                                Cancel Listing
+                              </button>
+                            ) : null}
+                          </>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => setDeleteConfirmOpen(true)}
                           className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3.5 text-xs font-medium text-white/85 transition hover:border-white/35 hover:text-white"
                         >
                           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          Delete Completed Auction
+                          Delete Auction
                         </button>
-                      </div>
-                    ) : null}
-                    {isOwnListing && phase === 'live' ? (
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleSellerAction(auction.paused ? 'resume' : 'pause')
-                          }
-                          disabled={actionLoading}
-                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.05] px-3.5 text-xs font-medium text-white transition hover:border-white/35"
-                        >
-                          {auction.paused ? (
-                            <>
-                              <Play className="h-3.5 w-3.5" /> Resume
-                            </>
-                          ) : (
-                            <>
-                              <Pause className="h-3.5 w-3.5" /> Pause
-                            </>
-                          )}
-                        </button>
-                        {(auction.bid_count ?? 0) === 0 ? (
-                          <button
-                            type="button"
-                            onClick={() => handleSellerAction('cancel')}
-                            disabled={actionLoading}
-                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-white/20 bg-white/[0.04] px-3.5 text-xs font-medium text-white/80 transition hover:border-white/40 hover:text-white"
-                          >
-                            Cancel Listing
-                          </button>
-                        ) : null}
                       </div>
                     ) : null}
                   </div>
@@ -1921,14 +1921,16 @@ export function AuctionDetailClient({
                   id="detail-delete-auction-title"
                   className="text-base font-semibold tracking-tight text-white"
                 >
-                  Delete Completed Auction
+                  Delete Auction
                 </h3>
                 <p className="mt-1 truncate text-xs font-medium text-white/55">
                   {auction.title}
                 </p>
                 <p className="mt-3 text-xs leading-relaxed text-white/75">
-                  Are you sure you want to delete this completed auction? This action cannot be
-                  undone.
+                  Are you sure you want to delete this auction? This action cannot be undone.
+                  {(auction.bid_count ?? 0) > 0
+                    ? ` This listing currently has ${auction.bid_count} active bid(s).`
+                    : ''}
                 </p>
               </div>
             </div>
